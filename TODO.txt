@@ -1,8 +1,10 @@
++ Version detection: search for config files such as wp-config.php
 + Force Update plugin lists after a certain amount of time
 + Check for writable templates
 + Double check against CMS installation in different languages 
 + Joomla Forgotten Password functionality
 + Generic checks: Search for subdomains
++ Force User To Scan a CMS if the automated detaction failed
 
 Notes:
 https://codex.wordpress.org/WordPress_Versions

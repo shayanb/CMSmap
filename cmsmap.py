@@ -176,69 +176,56 @@ class Scanner:
             GenericChecks(self.url).HTTPSCheck()
             GenericChecks(self.url).HeadersCheck()
             GenericChecks(self.url).RobotsTXT()
-            if re.search("Wordpress", htmltext,re.IGNORECASE):
-                msg = "[*] CMS Detection: Wordpress"; print msg
-                if output : report.WriteTextFile(msg)
-                req = urllib2.Request(self.url+"/wp-config.php")
-                try:
-                    urllib2.urlopen(req)
+            
+            # WordPress
+            req = urllib2.Request(self.url+"/wp-config.php")
+            try:
+                urllib2.urlopen(req)
+                WPScan(self.url,self.threads).WPrun()
+            except urllib2.HTTPError, e:
+                if e.code == 403 :
                     WPScan(self.url,self.threads).WPrun()
-                except urllib2.HTTPError, e:
-                    if e.code == 403 : 
-                        WPScan(self.url,self.threads).WPrun()
-                    else:
-                        #print e.code
-                        msg = "[!] WordPress Config File Not Found: "+self.url+"/wp-config.php"; print_red(msg)
-                        if output : report.WriteTextFile(msg)
-                        msg = "[-] Probably you are scanning the wrong web directory"; print_red(msg)
-                        if output : report.WriteTextFile(msg)
-                        sys.exit() 
-                    
-            elif re.search("Joomla", htmltext,re.IGNORECASE):
-                msg = "[*] CMS Detection: Joomla"; print msg
-                if output : report.WriteTextFile(msg)
-                req = urllib2.Request(self.url+"/configuration.php")
+                else:
+                    #print e.code
+                    msg = "[!] WordPress Config File Not Found: "+self.url+"/wp-config.php"; print_red(msg)
+                    if output : report.WriteTextFile(msg)
+            
+            # Joomla
+            req = urllib2.Request(self.url+"/configuration.php")
+            try:
+                urllib2.urlopen(req)
+                JooScan(self.url,self.threads).Joorun()
+            except urllib2.HTTPError, e:
+                if e.code == 403 :
+                    JooScan(self.url,self.threads).Joorun()
+                else:
+                    #print e.code
+                    msg = "[!] Joomla Config File Not Found: "+self.url+"/configuration.php"; print_red(msg)
+                    if output : report.WriteTextFile(msg)    
+            
+            # Drupal
+            req = urllib2.Request(self.url+"/sites/default/settings.php")
+            try:
+                urllib2.urlopen(req)
+                DruScan(self.url,"default",self.threads).Drurun()
+            except urllib2.HTTPError, e:
+                pUrl = urlparse.urlparse(url)
+                netloc = pUrl.netloc.lower()
+                req = urllib2.Request(self.url+"/sites/"+netloc+"/settings.php")
                 try:
                     urllib2.urlopen(req)
-                    JooScan(self.url,self.threads).Joorun()
+                    DruScan(self.url,netloc,self.threads).Drurun()
                 except urllib2.HTTPError, e:
                     if e.code == 403 :
-                        JooScan(self.url,self.threads).Joorun()
+                        DruScan(self.url,netloc,self.threads).Drurun()
                     else:
                         #print e.code
-                        msg = "[!] Joomla Config File Not Found: "+self.url+"/configuration.php"; print_red(msg)
+                        msg = "[!] Drupal Config File Not Found: "+self.url+"/sites/default/settings.php"; print_red(msg)
                         if output : report.WriteTextFile(msg)
-                        msg = "[-] Probably you are scanning the wrong web directory"; print_red(msg)
-                        if output : report.WriteTextFile(msg)
-                        sys.exit()                
-                
-            elif re.search("Drupal", htmltext,re.IGNORECASE):
-                msg = "[*] CMS Detection: Drupal"; print msg
-                if output : report.WriteTextFile(msg)
-                req = urllib2.Request(self.url+"/sites/default/settings.php")
-                try:
-                    urllib2.urlopen(req)
-                    DruScan(self.url,"default",self.threads).Drurun()
-                except urllib2.HTTPError, e:
-                    pUrl = urlparse.urlparse(url)
-                    netloc = pUrl.netloc.lower()
-                    req = urllib2.Request(self.url+"/sites/"+netloc+"/settings.php")
-                    try:
-                        urllib2.urlopen(req)
-                        DruScan(self.url,netloc,self.threads).Drurun()
-                    except urllib2.HTTPError, e:
-                        if e.code == 403 :
-                            DruScan(self.url,netloc,self.threads).Drurun()
-                        else:
-                            #print e.code
-                            msg = "[!] Drupal Config File Not Found: "+self.url+"/sites/default/settings.php"; print_red(msg)
-                            if output : report.WriteTextFile(msg)
-                            msg = "[-] Probably you are scanning the wrong web directory"; print_red(msg)
-                            if output : report.WriteTextFile(msg)
-                            sys.exit()
-            else:
-                msg = "[-] CMS site Not Found: Probably you are scanning the wrong web directory"; print_red(msg)
-                if output : report.WriteTextFile(msg)
+
+            msg = "[!] CMS detection failed\n[!] Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; print_red(msg)
+            if output : report.WriteTextFile(msg)
+            sys.exit()
                 
         except urllib2.URLError, e:
             print_red("[!] Website Unreachable: "+self.url)
@@ -274,6 +261,8 @@ class WPScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
 
     def WPrun(self):
+        msg = "[*] CMS Detection: Wordpress"; print msg
+        if output : report.WriteTextFile(msg) 
         self.WPVersion()
         self.WPCurrentTheme()
         self.WPConfigFiles()
@@ -546,6 +535,8 @@ class JooScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
 
     def Joorun(self):
+        msg = "[*] CMS Detection: Joomla"; print msg
+        if output : report.WriteTextFile(msg)
         self.JooVersion()
         self.JooTemplate()
         self.JooConfigFiles()
@@ -723,6 +714,8 @@ class DruScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
 
     def Drurun(self):
+        msg = "[*] CMS Detection: Drupal"; print msg
+        if output : report.WriteTextFile(msg)
         self.DruVersion()
         self.Drutheme = self.DruTheme()
         ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
