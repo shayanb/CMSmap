@@ -1492,6 +1492,7 @@ class GenericChecks:
                 self.pbar.update((len(self.commFiles)*extIndex)+commFilesIndex)
             q.join()
         #self.pbar.finish()
+        sys.stdout.write(" "*500)
         sys.stdout.flush()      
 
         for file in self.interFiles:
