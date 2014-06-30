@@ -1517,37 +1517,37 @@ class Report:
             self.end = ""
             
     def info(self,msg):
+        self.WriteTextFile("[I] " +msg)
         msg = self.green + "[I] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
 
     def low(self,msg):
+        self.WriteTextFile("[L] " +msg)
         msg = self.yellow + "[L] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
 
     def medium(self,msg):
+        self.WriteTextFile("[M] " +msg)
         msg = self.orange + "[M] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
         
     def high(self,msg):
+        self.WriteTextFile("[H] " +msg)
         msg = self.red + "[H] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
 
     def status(self,msg):
+        self.WriteTextFile("[-] " +msg)
         msg = self.blue + "[-] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
         
     def message(self,msg):
         msg = "[-] " + msg; print msg
         self.WriteTextFile(msg)
         
     def error(self,msg):
+        self.WriteTextFile("[ERROR] " +msg)
         msg = self.red + "[ERROR] " + self.end + msg; print msg
-        self.WriteTextFile(msg)
 
     def verbose(self,msg):
         if verbose:
+            self.WriteTextFile("[v] " +msg)
             msg = self.grey + "[v] " + self.end + msg; print msg
-            self.WriteTextFile(msg)
         
     def WriteTextFile(self,msg):
         if output:
