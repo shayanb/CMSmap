@@ -154,6 +154,7 @@ class Scanner:
         self.url = None
         self.force = None
         self.threads = None
+        self.file = None
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -893,9 +894,8 @@ class ExploitDBSearch:
         self.headers={'User-Agent':self.agent,}
         
     def Core(self):
-        # Get this value from their classes
-        if verbose:      
-            msg = "Searching Core Vulnerabilities for version "+self.query ; report.message(msg)
+        # Get this value from their classes      
+        msg = "Searching Core Vulnerabilities for version "+self.query ; report.message(msg)
         htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
         regex = '/download/(.+?)">'
         pattern =  re.compile(regex)
@@ -1581,6 +1581,7 @@ def usage(version):
           -T, --threads   number of threads (Default: 5)
           -u, --usr       username or file 
           -p, --psw       password or file
+          -i, --input     scan multiple targets listed in a given text file
           -o, --output    save output in a file
           -k, --crack     password hashes file (WordPress and Joomla only)
           -w, --wordlist  wordlist file (Default: rockyou.txt)
@@ -1590,6 +1591,7 @@ def usage(version):
           """
     print "Example: "+ os.path.basename(sys.argv[0]) +" -t https://example.com"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -f W "
+    print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -i targets.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -u admin -p passwords.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -k hashes.txt"
     
@@ -1601,7 +1603,7 @@ if __name__ == "__main__":
     
     if sys.argv[1:]:
         try:
-            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhUf:', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update"])
+            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhUf:i:', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update","input="])
         except getopt.GetoptError as err:
             # print help information and exit:
             print(err) # print something like "option -a not recognized"
@@ -1620,7 +1622,7 @@ if __name__ == "__main__":
                 path = pUrl.path.lower()
                 if not scheme:
                     pUrl = "http://" + pUrl
-                    print "[-] No HTTP/HTTPS provided. Assuming HTTP"
+                    report.status("No HTTP/HTTPS provided. Assuming HTTP")
                 url = pUrl.geturl()
                 if url.endswith("/") :
                     url = url[:-1]
@@ -1642,6 +1644,8 @@ if __name__ == "__main__":
             elif o in("-o", "--output"):
                 output = True
                 report.fn = a
+            elif o in("-i", "--input"):
+                scanner.file = a
             elif o in("-U", "--update"):
                 CMSmapUpdate = True
             elif o in("-v", "--verbose"):
@@ -1674,6 +1678,25 @@ if __name__ == "__main__":
         BruteForcer(url,usrlist,pswlist).FindCMSType()
     elif CrackingPasswords:
         PostExploit(None).CrackingHashesType(hashfile, wordlist)
+    
+    elif scanner.file is not None:
+        targets = [line.strip() for line in open(scanner.file)]
+        for url in targets:
+            pUrl = urlparse.urlparse(url)
+            #clean up supplied URLs
+            netloc = pUrl.netloc.lower()
+            scheme = pUrl.scheme.lower()
+            path = pUrl.path.lower()
+            if not scheme:
+                pUrl = "http://" + pUrl
+                report.status("No HTTP/HTTPS provided. Assuming HTTP")
+            url = pUrl.geturl()
+            if url.endswith("/") :
+                url = url[:-1]
+            scanner.url = url
+            scanner.threads = threads
+            scanner.FindCMSType()
+    
     elif scanner.force is not None:
         scanner.url = url
         scanner.threads = threads
@@ -1689,6 +1712,6 @@ if __name__ == "__main__":
     report.status(msg)
     msg = "Completed in: "+str(datetime.timedelta(seconds=diffTime)).split(".")[0]
     report.status(msg)
-    if output: msg = "Output File Saved in: "+report.fn+"\n"; report.status(msg)
+    if output: msg = "Output File Saved in: "+report.fn; report.status(msg)
     
     
