@@ -1248,7 +1248,7 @@ wp-content/themes/groovyblog/scripts/thumb/thumb.php
 wp-content/themes/groovyblog/scripts/thumb/timthumb.php
 wp-content/themes/groovyblog/scripts/timthumb.php
 wp-content/themes/groovyblog/scripts/timthumb/timthumb.php
-wp-content/themes/groovyblog//thumb.php
+wp-content/themes/groovyblog/thumb.php
 wp-content/themes/groovyblog/thumb.php
 wp-content/themes/groovyblog/thumb/thumb.php
 wp-content/themes/groovyblog/thumb/timthumb.php

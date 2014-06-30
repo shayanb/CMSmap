@@ -6,6 +6,12 @@
 + Generic checks: Search for subdomains
 + Force User To Scan a CMS if the automated detaction failed
 
++ GetWordpressPluginsExploitDB -> download the archive and search plugins from there
++ Update verbose + writetotext functions
++ Offline exploit db search via github (Kali)
++ common is vulnerable plugins
+
+
 Notes:
 https://codex.wordpress.org/WordPress_Versions
 https://drupal.org/project/usage/drupal
