@@ -895,7 +895,7 @@ class ExploitDBSearch:
         
     def Core(self):
         # Get this value from their classes      
-        msg = "Searching Core Vulnerabilities for version "+self.query ; report.message(msg)
+        msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)
         htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
         regex = '/download/(.+?)">'
         pattern =  re.compile(regex)
