@@ -601,7 +601,7 @@ class JooScan:
                 #print e.code
                 pass
         for file in self.defFilesFound:
-            msg = file; print report.info(msg)
+            msg = file; report.info(msg)
             
     def JooFeed(self):
         try:
