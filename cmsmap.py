@@ -1591,7 +1591,7 @@ def usage(version):
           """
     print "Example: "+ os.path.basename(sys.argv[0]) +" -t https://example.com"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -f W "
-    print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -i targets.txt"
+    print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -i targets.txt -o output.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -u admin -p passwords.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -k hashes.txt"
     
