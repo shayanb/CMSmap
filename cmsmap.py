@@ -362,8 +362,7 @@ class WPScan:
                 #print e.code
                 pass
         for file in self.defFilesFound:
-            msg = file; print msg
-            report.WriteTextFile(msg)
+            msg = file; report.info(msg)
             
     def WPFeed(self):
         msg = "Enumerating Wordpress Usernames via \"Feed\" ..."; report.message(msg)
@@ -376,8 +375,7 @@ class WPScan:
                 self.usernames = wpUsers + self.usernames
                 self.usernames = sorted(set(self.usernames))
             for user in self.usernames:
-                msg = user ; print msg
-                report.WriteTextFile(msg)
+                msg = user; report.medium(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -397,8 +395,7 @@ class WPScan:
                 pass
         self.usernames = sorted(set(self.usernames))
         for user in self.usernames:
-            msg = user; print msg
-            report.WriteTextFile(msg)
+            msg = user; report.medium(msg)
         
     def WPForgottenPassword(self):
         # Username Enumeration via Forgotten Password
@@ -922,8 +919,7 @@ class ExploitDBSearch:
             regex = '/download/(.+?)">'
             pattern =  re.compile(regex)
             ExploitID = re.findall(pattern,htmltext)
-            msg =  plugin; print msg
-            report.WriteTextFile(msg)
+            msg =  plugin; report.info(msg)
             for Eid in ExploitID:
                 msg = "Vulnerable Plugin "+plugin+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
                 
@@ -1477,8 +1473,7 @@ class GenericChecks:
 
     def CommonFiles(self):
         msg = "Interesting Directories/Files ... "
-        report.info(msg)
-        report.WriteTextFile(msg)
+        report.message(msg)
         self.commFiles = [line.strip() for line in open('common_files.txt')]
         self.commExt=['.txt', '.php', '/' ]
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=(len(self.commFiles)*len(self.commExt))).start()
@@ -1499,11 +1494,11 @@ class GenericChecks:
                 sys.stdout.flush()
                 self.pbar.update((len(self.commFiles)*extIndex)+commFilesIndex)
             q.join()
-        self.pbar.finish()       
+        self.pbar.finish()
+        sys.stdout.flush()      
 
         for file in self.interFiles:
-            msg = self.url+"/"+file; print msg
-            report.WriteTextFile(msg)
+            msg = self.url+"/"+file; report.low(msg)
         self.pbar.finish()
         
 class Report:
