@@ -1693,6 +1693,7 @@ if __name__ == "__main__":
             url = pUrl.geturl()
             if url.endswith("/") :
                 url = url[:-1]
+            msg = "Scanning Webiste: "+url; report.message(msg)
             scanner.url = url
             scanner.threads = threads
             scanner.FindCMSType()
