@@ -475,11 +475,9 @@ class WPScan:
         q.join()
         self.pbar.finish()
         if self.timthumbsFound:
-            msg = "Timthumbs Found: "; report.medium(msg)
             for timthumbsFound in self.timthumbsFound:
-                msg = self.url+"/"+timthumbsFound; print msg
-                report.WriteTextFile(msg)
-            msg= "\tPotentially Vulnerable to File Upload: http://www.exploit-db.com/wordpress-timthumb-exploitation"; report.medium(msg)
+                msg = self.url+"/"+timthumbsFound; report.medium(msg)
+            msg= "  Timthumbs Potentially Vulnerable to File Upload: http://www.exploit-db.com/wordpress-timthumb-exploitation"; report.medium(msg)
             
     def WPThemes(self):
         msg = "Searching Wordpress Themes ..."; report.message(msg)
@@ -498,8 +496,7 @@ class WPScan:
         q.join()
         self.pbar.finish()
         for themesFound in self.themesFound:
-            msg = themesFound; print msg
-            report.WriteTextFile(msg)
+            msg = themesFound; report.info(msg)
 
 class JooScan:
     # Scan Joomla site
@@ -1494,7 +1491,7 @@ class GenericChecks:
                 sys.stdout.flush()
                 self.pbar.update((len(self.commFiles)*extIndex)+commFilesIndex)
             q.join()
-        self.pbar.finish()
+        #self.pbar.finish()
         sys.stdout.flush()      
 
         for file in self.interFiles:
