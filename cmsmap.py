@@ -601,9 +601,7 @@ class JooScan:
                 #print e.code
                 pass
         for file in self.defFilesFound:
-            msg = file; print msg
-            report.WriteTextFile(msg)
-
+            msg = file; print report.info(msg)
             
     def JooFeed(self):
         try:
@@ -614,8 +612,7 @@ class JooScan:
                 jooUsers = sorted(set(jooUsers))
                 for user in jooUsers :
                     self.usernames.append(user[1])
-                    msg =  user[1]+" "+user[0]; print msg
-                    report.WriteTextFile(msg)
+                    msg =  user[1]+" "+user[0]; report.info(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass 
@@ -787,8 +784,7 @@ class DruScan:
                 #print e.code
                 pass
         for file in self.defFilesFound:
-            msg = file; print msg
-            report.WriteTextFile(msg)
+            msg = file; report.info(msg)
 
     def DruViews(self):
         self.views = "/?q=admin/views/ajax/autocomplete/user/"
@@ -804,8 +800,7 @@ class DruScan:
                 usernames = usernames + re.findall(pattern,htmltext)
             usernames = sorted(set(usernames))
             for user in usernames:
-                msg = user; print msg
-                report.WriteTextFile(msg)
+                msg = user; report.info(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -824,8 +819,7 @@ class DruScan:
                     pattern =  re.compile(regex)
                     user = re.findall(pattern,htmltext)
                     usernames = usernames + user
-                    msg = user[0] ; print msg
-                    report.WriteTextFile(msg)
+                    msg = user[0] ; report.info(msg)
                 except urllib2.HTTPError, e:
                     pass
             self.usernames = usernames
@@ -1427,21 +1421,17 @@ class GenericChecks:
     def HeadersCheck(self):
         req = urllib2.Request(self.url,None,self.headers)
         msg = "HTTP Header Protections Not Enforced ..."
-        report.info(msg)
+        report.message(msg)
         try:
             response = urllib2.urlopen(req)
             if not (response.info().getheader('x-xss-protection') == '1; mode=block'):
-                msg = "X-XSS-Protection"; print msg
-                report.WriteTextFile(msg)
+                msg = "X-XSS-Protection"; report.info(msg)
             if not (response.info().getheader('x-frame-options') == 'deny' or 'sameorigin' or 'DENY' or 'SAMEORIGIN'):
-                msg = "X-Frame-Options"; print msg
-                report.WriteTextFile(msg)
+                msg = "X-Frame-Options"; report.info(msg)
             if not response.info().getheader('strict-transport-security'):
-                msg = "Strict-Transport-Security"; print msg
-                report.WriteTextFile(msg)
+                msg = "Strict-Transport-Security"; report.info(msg)
             if not response.info().getheader('x-content-security-policy'):
-                msg = "X-Content-Security-Policy"; print msg
-                report.WriteTextFile(msg)
+                msg = "X-Content-Security-Policy"; report.info(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -1490,10 +1480,9 @@ class GenericChecks:
                 sys.stdout.write(file+ext+"               \r")
                 sys.stdout.flush()
                 self.pbar.update((len(self.commFiles)*extIndex)+commFilesIndex)
+                sys.stdout.flush() 
             q.join()
-        #self.pbar.finish()
-        sys.stdout.write(" "*500)
-        sys.stdout.flush()      
+        self.pbar.finish()  
 
         for file in self.interFiles:
             msg = self.url+"/"+file; report.low(msg)
