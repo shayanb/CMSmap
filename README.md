@@ -27,13 +27,17 @@ Usage
 	          -T, --threads   number of threads (Default: 5)
 	          -u, --usr       username or file 
 	          -p, --psw       password or file
+	          -i, --input     scan multiple targets listed in a given text file
 	          -o, --output    save output in a file
 	          -k, --crack     password hashes file
 	          -w, --wordlist  wordlist file (Default: rockyou.txt - WordPress only)
 	          -U, --update    update CMSmap to the latest version
 	          -h, --help      show this help
+	          -f, --force     force scan (W)ordpress, (J)oomla or (D)rupal
 	          
 	Example: cmsmap.py -t https://example.com
+             cmsmap.py -t https://example.com -f W
+             cmsmap.py -t https://example.com -i targets.txt -o output.txt
 	         cmsmap.py -t https://example.com -u admin -p passwords.txt
 	         cmsmap.py -k hashes.txt
 
