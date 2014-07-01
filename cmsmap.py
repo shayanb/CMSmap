@@ -1498,11 +1498,11 @@ class Report:
     def col(self):
         if sys.stdout.isatty() and platform.system() != "Windows":
             self.green = '\033[32m'
-            self.orange = '\033[31m'
             self.blue = '\033[94m'
             self.red = '\033[31m'
             self.brown = '\033[33m'
             self.grey = '\033[90m'
+            self.orange = '\033[38;5;208m'
             self.yellow = '\033[93m'
             self.end = '\033[0m'
             
