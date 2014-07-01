@@ -418,7 +418,7 @@ class WPScan:
             htmltext = urllib2.urlopen(req).read()
             fullPath = re.findall(re.compile('Fatal error.*>/(.+?/)hello.php'),htmltext)
             if fullPath :
-                msg = "Wordpress Hello Plugin Full Path Disclosure: "+"/"+fullPath[0]+"hello.php"; report.info(msg)
+                msg = "Wordpress Hello Plugin Full Path Disclosure: "+"/"+fullPath[0]+"hello.php"; report.low(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -1498,7 +1498,7 @@ class Report:
     def col(self):
         if sys.stdout.isatty() and platform.system() != "Windows":
             self.green = '\033[32m'
-            self.orange = '\033[34m'
+            self.orange = '\033[31m'
             self.blue = '\033[94m'
             self.red = '\033[31m'
             self.brown = '\033[33m'
