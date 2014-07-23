@@ -232,7 +232,24 @@ class Scanner:
         except urllib2.URLError, e:
             msg = "Website Unreachable: "+self.url
             report.error(msg)
-            sys.exit()          
+            sys.exit()
+
+    def CheckURL(self):
+        pUrl = urlparse.urlparse(self.url)
+        #clean up supplied URLs
+        netloc = pUrl.netloc.lower()
+        scheme = pUrl.scheme.lower()
+        path = pUrl.path.lower()
+        if not scheme:
+            self.url = "http://" + self.url
+            report.status("No HTTP/HTTPS provided. Assuming HTTP...")
+        if path.endswith("asp" or "aspx"):
+            report.error("You are not scanning a PHP website")
+            sys.exit()
+        if path.endswith("txt" or "php"):
+            self.url = re.findall(re.compile('(.+?)/[A-Za-z0-9]+\.txt|php'),self.url)[0]
+        if self.url.endswith("/") :
+            self.url = self.url[:-1]
 
 class WPScan:
     # Scan WordPress site
@@ -791,20 +808,27 @@ class DruScan:
         self.views = "/?q=admin/views/ajax/autocomplete/user/"
         self.alphanum = list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         usernames = []
+        msg =  "Enumerating Drupal Usernames via \"Views\" Module..."; report.message(msg)
+        req = urllib2.Request(self.url+"/?q=admin/views/ajax/autocomplete/user/NotExisingUser1234!",None, self.headers)
+        noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
-            urllib2.urlopen(self.url+self.views)
-            msg =  "Enumerating Drupal Usernames via \"Views\" Module..."; report.message(msg)
-            for letter in self.alphanum:
-                htmltext = urllib2.urlopen(self.url+self.views+letter).read()
-                regex = '"(.+?)"'
-                pattern =  re.compile(regex)
-                usernames = usernames + re.findall(pattern,htmltext)
-            usernames = sorted(set(usernames))
-            for user in usernames:
-                msg = user; report.info(msg)
+            noRedirOpener.open(req)
         except urllib2.HTTPError, e:
             #print e.code
-            pass
+            # If NotExisingUser1234! doesn't return 200 then search users
+            try:
+                urllib2.urlopen(self.url+self.views)
+                for letter in self.alphanum:
+                    htmltext = urllib2.urlopen(self.url+self.views+letter).read()
+                    regex = '"(.+?)"'
+                    pattern =  re.compile(regex)
+                    usernames = usernames + re.findall(pattern,htmltext)
+                usernames = sorted(set(usernames))
+                for user in usernames:
+                    msg = user; report.info(msg)
+            except urllib2.HTTPError, e:
+                #print e.code
+                pass
         
     def DruBlog(self):
         self.blog = "/?q=blog/"
@@ -820,7 +844,7 @@ class DruScan:
                     pattern =  re.compile(regex)
                     user = re.findall(pattern,htmltext)
                     usernames = usernames + user
-                    msg = user[0] ; report.info(msg)
+                    if user : msg = user[0] ; report.info(msg)
                 except urllib2.HTTPError, e:
                     pass
             self.usernames = usernames
@@ -1614,18 +1638,8 @@ if __name__ == "__main__":
                 usage(version)
                 sys.exit()
             elif o in ("-t", "--target"):
-                url = a
-                pUrl = urlparse.urlparse(url)
-                #clean up supplied URLs
-                netloc = pUrl.netloc.lower()
-                scheme = pUrl.scheme.lower()
-                path = pUrl.path.lower()
-                if not scheme:
-                    pUrl = "http://" + pUrl
-                    report.status("No HTTP/HTTPS provided. Assuming HTTP")
-                url = pUrl.geturl()
-                if url.endswith("/") :
-                    url = url[:-1]
+                scanner.url = a
+                scanner.CheckURL()
             elif o in ("-u", "--usr"):
                 usrlist = a
                 BruteForcingAttack = True
@@ -1682,28 +1696,15 @@ if __name__ == "__main__":
     elif scanner.file is not None:
         targets = [line.strip() for line in open(scanner.file)]
         for url in targets:
-            pUrl = urlparse.urlparse(url)
-            #clean up supplied URLs
-            netloc = pUrl.netloc.lower()
-            scheme = pUrl.scheme.lower()
-            path = pUrl.path.lower()
-            if not scheme:
-                pUrl = "http://" + pUrl
-                report.status("No HTTP/HTTPS provided. Assuming HTTP")
-            url = pUrl.geturl()
-            if url.endswith("/") :
-                url = url[:-1]
-            msg = "Scanning Webiste: "+url; report.message(msg)
             scanner.url = url
+            msg = "Scanning Webiste: "+scanner.url; report.message(msg)
             scanner.threads = threads
             scanner.FindCMSType()
     
     elif scanner.force is not None:
-        scanner.url = url
         scanner.threads = threads
         scanner.ForceCMSType()
     else :
-        scanner.url = url
         scanner.threads = threads
         scanner.FindCMSType()
     
