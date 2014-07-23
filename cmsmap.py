@@ -238,7 +238,7 @@ class Scanner:
         pUrl = urlparse.urlparse(self.url)
         #clean up supplied URLs
         netloc = pUrl.netloc.lower()
-        scheme = pUrl.scheme.lower()
+        scheme = pUrl.scheme.lower() 
         path = pUrl.path.lower()
         if not scheme:
             self.url = "http://" + self.url
