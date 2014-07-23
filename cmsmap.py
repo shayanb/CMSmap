@@ -239,7 +239,7 @@ class Scanner:
         #clean up supplied URLs
         netloc = pUrl.netloc.lower()
         scheme = pUrl.scheme.lower() 
-        path = pUrl.path.lower()
+        path = pUrl.path.lower() 
         if not scheme:
             self.url = "http://" + self.url
             report.status("No HTTP/HTTPS provided. Assuming HTTP...")
