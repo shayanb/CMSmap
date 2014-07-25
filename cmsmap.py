@@ -210,7 +210,7 @@ class Scanner:
                 urllib2.urlopen(req)
                 DruScan(self.url,"default",self.threads).Drurun()
             except urllib2.HTTPError, e:
-                pUrl = urlparse.urlparse(url)
+                pUrl = urlparse.urlparse(self.url)
                 netloc = pUrl.netloc.lower()
                 req = urllib2.Request(self.url+"/sites/"+netloc+"/settings.php")
                 try:
