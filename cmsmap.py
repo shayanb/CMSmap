@@ -1784,8 +1784,13 @@ if __name__ == "__main__":
             scanner.threads = threads
             scanner.FindCMSType()
     except KeyboardInterrupt:
-        msg = "Quitting..."; report.error(msg)
-        sys.exit()
+        msg = "Interrupt caught. Do you really want to exit?"; report.error(msg)
+        resp = raw_input("[Y/n]: ")
+        if resp.lower() == 'y':
+            msg = "Quitting..."; report.error(msg)
+            sys.exit()
+        else:
+            pass
         
     end = time.time()
     diffTime = end - start
