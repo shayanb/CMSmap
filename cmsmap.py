@@ -157,6 +157,7 @@ class Scanner:
         self.file = None
         
     def ForceCMSType(self):
+        GenericChecks(self.url).NotExisitingLength()
         GenericChecks(self.url).HTTPSCheck()
         GenericChecks(self.url).HeadersCheck()
         GenericChecks(self.url).RobotsTXT()
@@ -173,11 +174,11 @@ class Scanner:
     def FindCMSType(self):
         req = urllib2.Request(self.url,None,self.headers)
         try:
-            htmltext = urllib2.urlopen(req).read()
+            GenericChecks(self.url).NotExisitingLength()
             GenericChecks(self.url).HTTPSCheck()
             GenericChecks(self.url).HeadersCheck()
             GenericChecks(self.url).RobotsTXT()
-            
+            htmltext = urllib2.urlopen(req).read()
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php")
             try:
@@ -271,6 +272,7 @@ class WPScan:
         self.pluginsFound = []
         self.themesFound = []
         self.timthumbsFound = []
+        self.notValidLen = []
         self.theme = None
         self.notExistingCode = 404
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
@@ -281,7 +283,7 @@ class WPScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
 
     def WPrun(self):
-        msg = "CMS Detection: Wordpress"; report.info(msg) 
+        msg = "CMS Detection: Wordpress"; report.info(msg)
         self.WPVersion()
         self.WPCurrentTheme()
         self.WPConfigFiles()
@@ -290,6 +292,8 @@ class WPScan:
         self.WPAuthor()
         BruteForcer(self.url,self.usernames,self.weakpsw).WPrun()
         self.WPForgottenPassword()
+        self.WPXMLRPC_pingback()
+        self.WPXMLRPC_BF()
         GenericChecks(self.url).AutocompleteOff('/wp-login.php')
         self.WPNotExisitingCode()
         self.WPDefaultFiles()
@@ -441,7 +445,7 @@ class WPScan:
             pass
 
     def WPDirsListing(self):
-        msg = "[-] Directory Listing Enabled ..."; print msg
+        msg = "[-] Checking for Directory Listing Enabled ..."; print msg
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/wp-content/')
         GenericChecks(self.url).DirectoryListing('/wp-content/'+self.theme)
@@ -451,12 +455,14 @@ class WPScan:
             GenericChecks(self.url).DirectoryListing('/wp-content/plugins/'+plugin)
 
     def WPNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"NotExisingPlugin1234!"+"/",None, self.headers)
+        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
-            noRedirOpener.open(req)
+            htmltext = noRedirOpener.open(req).read()
+            self.notValidLen.append(len(htmltext))
         except urllib2.HTTPError, e:
             #print e.code
+            self.notValidLen.append(len(e.read()))
             self.notExistingCode = e.code
                         
     def WPplugins(self):
@@ -466,7 +472,7 @@ class WPScan:
         q = Queue.Queue(self.queue_num)        
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,q)
+            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,self.notValidLen,q)
             t.daemon = True
             t.start()
         # Add all plugins to the queue
@@ -483,7 +489,7 @@ class WPScan:
         q = Queue.Queue(self.queue_num)        
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,"/","/",self.timthumbsFound,self.notExistingCode,q)
+            t = ThreadScanner(self.url,"/","/",self.timthumbsFound,self.notExistingCode,self.notValidLen,q)
             t.daemon = True
             t.start()
         # Add all plugins to the queue
@@ -504,7 +510,7 @@ class WPScan:
         q = Queue.Queue(self.queue_num)
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,self.themePath,"/",self.themesFound,self.notExistingCode,q)
+            t = ThreadScanner(self.url,self.themePath,"/",self.themesFound,self.notExistingCode,self.notValidLen,q)
             t.daemon = True
             t.start()                
         # Add all theme to the queue
@@ -515,6 +521,40 @@ class WPScan:
         self.pbar.finish()
         for themesFound in self.themesFound:
             msg = themesFound; report.info(msg)
+    
+    def WPXMLRPC_pingback(self):
+        msg = "Checking XML-RPC Pingback Vulnerability ..."; report.verbose(msg)
+        self.headers['Content-Type:'] ='text/xml'
+        self.postdata = '''<methodCall><methodName>pingback.ping</methodName><params>
+                        <param><value><string>http://N0tB3th3re0484940:22/</string></value></param>
+                        <param><value><string>'''+self.url+'''</string></value></param>
+                        </params></methodCall>'''
+        try:
+            req = urllib2.Request(self.url+'/xmlrpc.php',None,self.headers)
+            htmltext = urllib2.urlopen(req).read()
+            if re.search('<name>16</name>',htmltext):
+                msg = "Website vulnerable to XML-RPC Pingback Force Vulnerability"; report.low(msg)
+        except urllib2.HTTPError, e:
+            #print e.code
+            pass
+        del self.headers['Content-Type:']
+        
+    def WPXMLRPC_BF(self):
+        msg = "Checking XML-RPC Brute Force Vulnerability ..."; report.verbose(msg)
+        self.headers['Content-Type:'] ='text/xml'
+        self.postdata = '''<methodCall><methodName>wp.getUsersBlogs</methodName><params>
+                        <param><value><string>admin</string></value></param>
+                        <param><value><string></string></value></param>
+                        </params></methodCall>'''
+        try:
+            req = urllib2.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
+            htmltext = urllib2.urlopen(req).read()
+            if re.search('<int>403</int>',htmltext):
+                msg = "Website vulnerable to XML-RPC Brute Force Vulnerability"; report.medium(msg)
+        except urllib2.HTTPError, e:
+            #print e.code
+            pass
+        del self.headers['Content-Type:']   
 
 class JooScan:
     # Scan Joomla site
@@ -527,6 +567,7 @@ class JooScan:
         self.usernames = []
         self.pluginPath = "/components/"
         self.pluginsFound = []
+        self.notValidLen = []
         self.notExistingCode = 404
         self.weakpsw = ['password', 'admin','123456','Password1'] # 5th attempt is the username 
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
@@ -636,7 +677,7 @@ class JooScan:
             pass 
         
     def JooDirsListing(self):
-        msg = "[-] Directory Listing Enabled ..."; print msg
+        msg = "[-] Checking for Directory Listing Enabled ..."; print msg
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/administrator/')
         GenericChecks(self.url).DirectoryListing('/bin/')
@@ -657,14 +698,16 @@ class JooScan:
             GenericChecks(self.url).DirectoryListing('/components/'+plugin)
             
     def JooNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"NotExisingPlugin1234!"+"/",None, self.headers)
+        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
-            noRedirOpener.open(req)
+            htmltext = noRedirOpener.open(req).read()
+            self.notValidLen.append(len(htmltext))
         except urllib2.HTTPError, e:
             #print e.code
+            self.notValidLen.append(len(e.read()))
             self.notExistingCode = e.code
-
+            
     def JooComponents(self):
         msg = "Searching Joomla Components ..."; report.message(msg)
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
@@ -672,7 +715,7 @@ class JooScan:
         q = Queue.Queue(self.queue_num)        
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,q)
+            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,self.notExistingCode,q)
             t.daemon = True
             t.start()
         # Add all plugins to the queue
@@ -691,6 +734,7 @@ class DruScan:
         self.queue_num = 5
         self.thread_num = threads
         self.notExistingCode = 404
+        self.notValidLen = []
         self.netloc = netloc
         self.pluginPath = "/modules/"
         self.forgottenPsw = "/?q=user/password"
@@ -869,7 +913,7 @@ class DruScan:
             pass
 
     def DruDirsListing(self):
-        msg = "[-] Directory Listing Enabled ..."; print msg
+        msg = "Checking for Directory Listing Enabled ..."; print msg
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/includes/')
         GenericChecks(self.url).DirectoryListing('/misc/')
@@ -883,23 +927,25 @@ class DruScan:
             GenericChecks(self.url).DirectoryListing('/modules/'+plugin)
             
     def DruNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"NotExisingPlugin1234!"+"/",None, self.headers)
+        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
-            noRedirOpener.open(req)
+            htmltext = noRedirOpener.open(req).read()
+            self.notValidLen.append(len(htmltext))
         except urllib2.HTTPError, e:
             #print e.code
+            self.notValidLen.append(len(e.read()))
             self.notExistingCode = e.code
-            
+                       
     def DruModules(self):
-        msg = "Searching Drupal Modules ..."; report.message(msg)
+        msg = "[-] Checking for Directory Listing Enabled ..."; report.message(msg)
         report.WriteTextFile(msg)
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,q)
+            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,self.notExistingCode,q)
             t.daemon = True
             t.start()
         # Add all plugins to the queue
@@ -918,35 +964,44 @@ class ExploitDBSearch:
         self.headers={'User-Agent':self.agent,}
         
     def Core(self):
-        # Get this value from their classes      
-        msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)
-        htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
-        regex = '/download/(.+?)">'
-        pattern =  re.compile(regex)
-        ExploitID = re.findall(pattern,htmltext)
-        for Eid in ExploitID:
-            msg = "Vulnerable Core Version "+self.query+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+        if self.query is not None:
+            # Get this value from their classes      
+            msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)
+            htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
+            regex = '/download/(.+?)">'
+            pattern =  re.compile(regex)
+            ExploitID = re.findall(pattern,htmltext)
+            for Eid in ExploitID:
+                msg = "Vulnerable Core Version "+self.query+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+        else:
+            pass
         
     def Plugins(self):
-        msg = "Searching Vulnerable Plugins from ExploitDB website ..." ; report.message(msg)
-        for plugin in self.query:
-            htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+plugin).read()
-            regex = '/download/(.+?)">'
-            pattern =  re.compile(regex)
-            ExploitID = re.findall(pattern,htmltext)
-            msg =  plugin; report.info(msg)
-            for Eid in ExploitID:
-                msg = "Vulnerable Plugin "+plugin+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
-                
+        if self.query is not None:
+            msg = "Searching Vulnerable Plugins from ExploitDB website ..." ; report.message(msg)
+            for plugin in self.query:
+                htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+plugin).read()
+                regex = '/download/(.+?)">'
+                pattern =  re.compile(regex)
+                ExploitID = re.findall(pattern,htmltext)
+                msg =  plugin; report.info(msg)
+                for Eid in ExploitID:
+                    msg = "Vulnerable Plugin "+plugin+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+        else:
+            pass
+        
     def Themes(self):
-        msg = "Searching Vulnerable Theme from ExploitDB website ..."; report.message(msg)
-        for theme in self.query :
-            htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+theme).read()
-            regex = '/download/(.+?)">'
-            pattern =  re.compile(regex)
-            ExploitID = re.findall(pattern,htmltext)
-            for Eid in ExploitID:
-                msg = "Vulnerable Theme "+theme+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+        if self.query is not None:
+            msg = "Searching Vulnerable Theme from ExploitDB website ..."; report.message(msg)
+            for theme in self.query :
+                htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+theme).read()
+                regex = '/download/(.+?)">'
+                pattern =  re.compile(regex)
+                ExploitID = re.findall(pattern,htmltext)
+                for Eid in ExploitID:
+                    msg = "Vulnerable Theme "+theme+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+        else:
+            pass
 
 class NoRedirects(urllib2.HTTPRedirectHandler):
     """Redirect handler that simply raises a Redirect()."""
@@ -960,7 +1015,7 @@ class ThreadScanner(threading.Thread):
     # pluginPath = /wp-content
     # pluginPathEnd = /
     # pluginFound = wptest 
-    def __init__(self,url,pluginPath,pluginPathEnd,pluginsFound,notExistingCode,q):
+    def __init__(self,url,pluginPath,pluginPathEnd,pluginsFound,notExistingCode,notValidLen,q):
         threading.Thread.__init__ (self)
         self.url = url
         self.q = q
@@ -968,6 +1023,7 @@ class ThreadScanner(threading.Thread):
         self.pluginsFound = pluginsFound
         self.pluginPathEnd = pluginPathEnd
         self.notExistingCode = notExistingCode
+        self.notValidLen = notValidLen
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,'Accept-Encoding': None,}
 
@@ -980,8 +1036,7 @@ class ThreadScanner(threading.Thread):
             try:
                 noRedirOpener.open(req); self.pluginsFound.append(plugin)
             except urllib2.HTTPError, e:
-                #print e.code
-                if e.code == 403 or e.code != self.notExistingCode : self.pluginsFound.append(plugin)
+                if e.code == 403 or e.code != self.notExistingCode and len(e.read()) not in self.notValidLen : self.pluginsFound.append(plugin)
             except urllib2.URLError, e:
                 msg = "[!] Thread Error: If this error persists, reduce number of threads"; print msg
             self.q.task_done()
@@ -1419,9 +1474,9 @@ class GenericChecks:
         self.notExistingCode = 404
         self.queue_num = 5
         self.thread_num = 5
-        # autocompletation
-        # clear text : http or https
-        # directory listing 
+        self.commFiles = [line.strip() for line in open('common_files.txt')]
+        self.commExt=['.txt', '.php', '/' ]
+        self.notValidLen = []
         
     def DirectoryListing(self,relPath):
         self.relPath = relPath
@@ -1444,18 +1499,24 @@ class GenericChecks:
 
     def HeadersCheck(self):
         req = urllib2.Request(self.url,None,self.headers)
-        msg = "HTTP Header Protections Not Enforced ..."
-        report.message(msg)
+        msg = "Checking Headers ..."; report.verbose(msg)
         try:
             response = urllib2.urlopen(req)
-            if not (response.info().getheader('x-xss-protection') == '1; mode=block'):
-                msg = "X-XSS-Protection"; report.info(msg)
-            if not (response.info().getheader('x-frame-options') == 'deny' or 'sameorigin' or 'DENY' or 'SAMEORIGIN'):
-                msg = "X-Frame-Options"; report.info(msg)
+            #print response.info()
+            if response.info().getheader('Server'):
+                msg = "Server: "+response.info().getheader('Server'); report.info(msg)
+            if response.info().getheader('X-Powered-By'):
+                msg = "X-Powered-By: "+response.info().getheader('X-Powered-By'); report.info(msg)
+            if response.info().getheader('X-Generator'):
+                msg = "X-Generator: "+response.info().getheader('X-Generator'); report.low(msg)
+            if response.info().getheader('x-xss-protection') == '0':
+                msg = "X-XSS-Protection Disabled"; report.high(msg)
+            if not response.info().getheader('x-frame-options') or (response.info().getheader('x-frame-options').lower() != 'sameorigin' or 'deny'):
+                msg = "X-Frame-Options: Not Enforced"; report.low(msg)
             if not response.info().getheader('strict-transport-security'):
-                msg = "Strict-Transport-Security"; report.info(msg)
+                msg = "Strict-Transport-Security: Not Enforced"; report.info(msg)
             if not response.info().getheader('x-content-security-policy'):
-                msg = "X-Content-Security-Policy"; report.info(msg)
+                msg = "X-Content-Security-Policy: Not Enforced"; report.info(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -1481,19 +1542,29 @@ class GenericChecks:
         except urllib2.HTTPError, e:
             #print e.code
             pass
-
+    
+    def NotExisitingLength(self):
+        for exten in self.commExt:
+            req = urllib2.Request(self.url+"/N0WayThatYouAreHere123"+exten,None, self.headers)
+            noRedirOpener = urllib2.build_opener(NoRedirects())
+            try:
+                htmltext = noRedirOpener.open(req).read()
+                self.notValidLen.append(len(htmltext))
+            except urllib2.HTTPError, e:
+                self.notValidLen.append(len(e.read()))
+                self.notExistingCode = e.code
+        self.notValidLen = sorted(set(self.notValidLen))
+   
     def CommonFiles(self):
         msg = "Interesting Directories/Files ... "
         report.message(msg)
-        self.commFiles = [line.strip() for line in open('common_files.txt')]
-        self.commExt=['.txt', '.php', '/' ]
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=(len(self.commFiles)*len(self.commExt))).start()
         self.interFiles = []
         # Create Code
         q = Queue.Queue(self.queue_num)        
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,"/","",self.interFiles,self.notExistingCode,q)
+            t = ThreadScanner(self.url,"/","",self.interFiles,self.notExistingCode,self.notValidLen,q)
             t.daemon = True
             t.start()
             
