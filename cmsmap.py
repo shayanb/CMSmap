@@ -1677,11 +1677,11 @@ def exit(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
     try:
         msg = "Interrupt caught. Do you really want to exit?"; report.error(msg)
-        if raw_input("[y/n]: ").lower().startswith('y'):
-            msg = "Quitting.. Bye!"; report.info(msg)
+        if raw_input("[y/N]: ").lower().startswith('y'):
+            msg = "Bye! Quitting.. "; report.message(msg)
             sys.exit()
     except KeyboardInterrupt:
-        msg = "Quitting.. Bye!"; report.info(msg)
+        msg = "Bye! Quitting.."; report.message(msg)
         sys.exit()
     signal.signal(signal.SIGINT, exit)
 
