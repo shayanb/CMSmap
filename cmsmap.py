@@ -1742,8 +1742,6 @@ if __name__ == "__main__":
         usage(version)
         sys.exit()
     
-    
-    
     start = time.time()
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')
     report.status(msg)
@@ -1768,14 +1766,16 @@ if __name__ == "__main__":
         targets = [line.strip() for line in open(scanner.file)]
         for url in targets:
             scanner.url = url
-            msg = "Scanning Webiste: "+scanner.url; report.message(msg)
+            msg = "Target: "+scanner.url; report.status(msg)
             scanner.threads = threads
             scanner.FindCMSType()
     
     elif scanner.force is not None:
+        msg = "Target: "+scanner.url; report.status(msg)
         scanner.threads = threads
         scanner.ForceCMSType()
     else :
+        msg = "Target: "+scanner.url; report.status(msg)
         scanner.threads = threads
         scanner.FindCMSType()
     
