@@ -157,7 +157,6 @@ class Scanner:
         self.file = None
         
     def ForceCMSType(self):
-        GenericChecks(self.url).NotExisitingLength()
         GenericChecks(self.url).HTTPSCheck()
         GenericChecks(self.url).HeadersCheck()
         GenericChecks(self.url).RobotsTXT()
@@ -174,7 +173,6 @@ class Scanner:
     def FindCMSType(self):
         req = urllib2.Request(self.url,None,self.headers)
         try:
-            GenericChecks(self.url).NotExisitingLength()
             GenericChecks(self.url).HTTPSCheck()
             GenericChecks(self.url).HeadersCheck()
             GenericChecks(self.url).RobotsTXT()
@@ -281,6 +279,8 @@ class WPScan:
         self.themes = [line.strip() for line in open('wp_themes.txt')]
         self.timthumbs = [line.strip() for line in open('wp_timthumbs.txt')]
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
+        self.genChecker = GenericChecks(url)
+        self.genChecker.NotExisitingLength()
 
     def WPrun(self):
         msg = "CMS Detection: Wordpress"; report.info(msg)
@@ -294,10 +294,10 @@ class WPScan:
         self.WPForgottenPassword()
         self.WPXMLRPC_pingback()
         self.WPXMLRPC_BF()
-        GenericChecks(self.url).AutocompleteOff('/wp-login.php')
+        self.genChecker.AutocompleteOff('/wp-login.php')
         self.WPNotExisitingCode()
         self.WPDefaultFiles()
-        GenericChecks(self.url).CommonFiles()
+        self.genChecker.CommonFiles()
         self.WPplugins()
         ExploitDBSearch(self.url, 'Wordpress', self.pluginsFound).Plugins()
         self.WPThemes()
@@ -574,7 +574,9 @@ class JooScan:
         self.plugins = [line.strip() for line in open('joomla_plugins.txt')]
         self.versions = [line.strip() for line in open('joomla_versions.txt')]
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
-
+        self.genChecker = GenericChecks(url)
+        self.genChecker.NotExisitingLength()
+        
     def Joorun(self):
         msg = "CMS Detection: Joomla"; report.info(msg)
         self.JooVersion()
@@ -585,7 +587,7 @@ class JooScan:
         self.JooNotExisitingCode()
         self.JooDefaultFiles()
         # === Takes Long ===
-        GenericChecks(self.url).CommonFiles()
+        self.genChecker.CommonFiles()
         self.JooComponents()
         ExploitDBSearch(self.url, "Joomla", self.pluginsFound).Plugins()
         self.JooDirsListing()
@@ -745,6 +747,8 @@ class DruScan:
         self.usernames = []
         self.pluginsFound = []
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
+        self.genChecker = GenericChecks(url)
+        self.genChecker.NotExisitingLength()
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
@@ -758,7 +762,7 @@ class DruScan:
         self.DruNotExisitingCode()
         self.DruDefaultFiles()
         # === Takes Long ===
-        GenericChecks(self.url).CommonFiles()
+        self.genChecker.CommonFiles()
         self.DruForgottenPassword()
         self.DruModules()
         ExploitDBSearch(self.url, "Drupal", self.pluginsFound).Plugins()
@@ -1746,39 +1750,43 @@ if __name__ == "__main__":
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')
     report.status(msg)
     
-    # if plugins don't exist (first time of running) then initialize
-    if not os.path.exists('wp_plugins.txt' or 'joomla_plugins.txt' or 'drupal_plugins.txt'):
-        initializer = Initialize()
-        initializer.GetWordPressPlugins()
-        initializer.GetJoomlaPluginsExploitDB()
-        initializer.GetWordpressPluginsExploitDB()
-        initializer.GetDrupalPlugins()
-
-    if CMSmapUpdate :
-        initializer = Initialize()
-        initializer.CMSmapUpdate()
-    elif BruteForcingAttack :
-        BruteForcer(url,usrlist,pswlist).FindCMSType()
-    elif CrackingPasswords:
-        PostExploit(None).CrackingHashesType(hashfile, wordlist)
+    try:
+        # if plugins don't exist (first time of running) then initialize
+        if not os.path.exists('wp_plugins.txt' or 'joomla_plugins.txt' or 'drupal_plugins.txt'):
+            initializer = Initialize()
+            initializer.GetWordPressPlugins()
+            initializer.GetJoomlaPluginsExploitDB()
+            initializer.GetWordpressPluginsExploitDB()
+            initializer.GetDrupalPlugins()
     
-    elif scanner.file is not None:
-        targets = [line.strip() for line in open(scanner.file)]
-        for url in targets:
-            scanner.url = url
+        if CMSmapUpdate :
+            initializer = Initialize()
+            initializer.CMSmapUpdate()
+        elif BruteForcingAttack :
+            BruteForcer(url,usrlist,pswlist).FindCMSType()
+        elif CrackingPasswords:
+            PostExploit(None).CrackingHashesType(hashfile, wordlist)
+        
+        elif scanner.file is not None:
+            targets = [line.strip() for line in open(scanner.file)]
+            for url in targets:
+                scanner.url = url
+                msg = "Target: "+scanner.url; report.status(msg)
+                scanner.threads = threads
+                scanner.FindCMSType()
+        
+        elif scanner.force is not None:
+            msg = "Target: "+scanner.url; report.status(msg)
+            scanner.threads = threads
+            scanner.ForceCMSType()
+        else :
             msg = "Target: "+scanner.url; report.status(msg)
             scanner.threads = threads
             scanner.FindCMSType()
-    
-    elif scanner.force is not None:
-        msg = "Target: "+scanner.url; report.status(msg)
-        scanner.threads = threads
-        scanner.ForceCMSType()
-    else :
-        msg = "Target: "+scanner.url; report.status(msg)
-        scanner.threads = threads
-        scanner.FindCMSType()
-    
+    except KeyboardInterrupt:
+        msg = "Quitting..."; report.error(msg)
+        sys.exit()
+        
     end = time.time()
     diffTime = end - start
     msg = "Date & Time: "+time.strftime('%d/%m/%Y %H:%M:%S')
