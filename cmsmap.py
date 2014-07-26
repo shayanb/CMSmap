@@ -679,7 +679,7 @@ class JooScan:
             pass 
         
     def JooDirsListing(self):
-        msg = "[-] Checking for Directory Listing Enabled ..."; print msg
+        msg = "Checking for Directory Listing Enabled ..."; print msg
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/administrator/')
         GenericChecks(self.url).DirectoryListing('/bin/')
