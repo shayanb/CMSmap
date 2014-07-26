@@ -1676,7 +1676,7 @@ wordlist = 'wordlist/rockyou.txt'
 def exit(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
     try:
-        msg = "Interrupt caught. Do you really want to exit?"; report.error(msg)
+        msg = "Interrupt caught. Scan paused. Do you really want to exit?"; report.error(msg)
         if raw_input("[y/N]: ").lower().startswith('y'):
             msg = "Bye! Quitting.. "; report.message(msg)
             sys.exit()
