@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import smtplib, base64, os, sys, getopt, urllib2, urllib, re, socket, time, httplib, tarfile
 import itertools, urlparse, threading, Queue, multiprocessing, cookielib, datetime, zipfile
-import platform
+import platform, signal
 
 from thirdparty.multipart import multipartpost
 from thirdparty.progressbar import progressbar
@@ -1673,6 +1673,18 @@ wordlist = 'wordlist/rockyou.txt'
 
 # Global Methos =================================================================================================
 
+def exit(signum, frame):
+    signal.signal(signal.SIGINT, original_sigint)
+    try:
+        msg = "Interrupt caught. Do you really want to exit?"; report.error(msg)
+        if raw_input("[y/n]: ").lower().startswith('y'):
+            msg = "Quitting.. Bye!"; report.info(msg)
+            sys.exit()
+    except KeyboardInterrupt:
+        msg = "Quitting.. Bye!"; report.info(msg)
+        sys.exit()
+    signal.signal(signal.SIGINT, exit)
+
 def usage(version):
     print "CMSmap tool v"+str(version)+" - Simple CMS Scanner\nAuthor: Mike Manzotti mike.manzotti@dionach.com\nUsage: " + os.path.basename(sys.argv[0]) + """ -t <URL>
           -t, --target    target URL (e.g. 'https://abc.test.com:8080/')
@@ -1750,48 +1762,42 @@ if __name__ == "__main__":
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')
     report.status(msg)
     
-    try:
-        # if plugins don't exist (first time of running) then initialize
-        if not os.path.exists('wp_plugins.txt' or 'joomla_plugins.txt' or 'drupal_plugins.txt'):
-            initializer = Initialize()
-            initializer.GetWordPressPlugins()
-            initializer.GetJoomlaPluginsExploitDB()
-            initializer.GetWordpressPluginsExploitDB()
-            initializer.GetDrupalPlugins()
+    original_sigint = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, exit)
+
+    # if plugins don't exist (first time of running) then initialize
+    if not os.path.exists('wp_plugins.txt' or 'joomla_plugins.txt' or 'drupal_plugins.txt'):
+        initializer = Initialize()
+        initializer.GetWordPressPlugins()
+        initializer.GetJoomlaPluginsExploitDB()
+        initializer.GetWordpressPluginsExploitDB()
+        initializer.GetDrupalPlugins()
+
+    if CMSmapUpdate :
+        initializer = Initialize()
+        initializer.CMSmapUpdate()
+    elif BruteForcingAttack :
+        BruteForcer(url,usrlist,pswlist).FindCMSType()
+    elif CrackingPasswords:
+        PostExploit(None).CrackingHashesType(hashfile, wordlist)
     
-        if CMSmapUpdate :
-            initializer = Initialize()
-            initializer.CMSmapUpdate()
-        elif BruteForcingAttack :
-            BruteForcer(url,usrlist,pswlist).FindCMSType()
-        elif CrackingPasswords:
-            PostExploit(None).CrackingHashesType(hashfile, wordlist)
-        
-        elif scanner.file is not None:
-            targets = [line.strip() for line in open(scanner.file)]
-            for url in targets:
-                scanner.url = url
-                msg = "Target: "+scanner.url; report.status(msg)
-                scanner.threads = threads
-                scanner.FindCMSType()
-        
-        elif scanner.force is not None:
-            msg = "Target: "+scanner.url; report.status(msg)
-            scanner.threads = threads
-            scanner.ForceCMSType()
-        else :
+    elif scanner.file is not None:
+        targets = [line.strip() for line in open(scanner.file)]
+        for url in targets:
+            scanner.url = url
             msg = "Target: "+scanner.url; report.status(msg)
             scanner.threads = threads
             scanner.FindCMSType()
-    except KeyboardInterrupt:
-        msg = "Interrupt caught. Do you really want to exit?"; report.error(msg)
-        resp = raw_input("[Y/n]: ")
-        if resp.lower() == 'y':
-            msg = "Quitting..."; report.error(msg)
-            sys.exit()
-        else:
-            pass
-        
+    
+    elif scanner.force is not None:
+        msg = "Target: "+scanner.url; report.status(msg)
+        scanner.threads = threads
+        scanner.ForceCMSType()
+    else :
+        msg = "Target: "+scanner.url; report.status(msg)
+        scanner.threads = threads
+        scanner.FindCMSType()
+
     end = time.time()
     diffTime = end - start
     msg = "Date & Time: "+time.strftime('%d/%m/%Y %H:%M:%S')
