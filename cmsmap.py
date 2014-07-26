@@ -445,7 +445,7 @@ class WPScan:
             pass
 
     def WPDirsListing(self):
-        msg = "[-] Checking for Directory Listing Enabled ..."; print msg
+        msg = "Checking for Directory Listing Enabled ..."; print msg
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/wp-content/')
         GenericChecks(self.url).DirectoryListing('/wp-content/'+self.theme)
@@ -942,14 +942,14 @@ class DruScan:
             self.notExistingCode = e.code
                        
     def DruModules(self):
-        msg = "[-] Checking for Directory Listing Enabled ..."; report.message(msg)
+        msg = "Search Drupal Module ..."; report.message(msg)
         report.WriteTextFile(msg)
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)
         # Spawn all threads into code
         for u in range(self.thread_num):
-            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,self.notExistingCode,q)
+            t = ThreadScanner(self.url,self.pluginPath,"/",self.pluginsFound,self.notExistingCode,self.notExistingCode,self.notValidLen,q)
             t.daemon = True
             t.start()
         # Add all plugins to the queue
