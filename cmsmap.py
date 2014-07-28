@@ -1804,6 +1804,6 @@ if __name__ == "__main__":
     report.status(msg)
     msg = "Completed in: "+str(datetime.timedelta(seconds=diffTime)).split(".")[0]
     report.status(msg)
-    if output: msg = "Output File Saved in: "+report.fn; report.status(msg)
+    if output: msg = "Output File Saved in: "+report.fn; report.status(msg) 
     
     
