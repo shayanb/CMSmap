@@ -13,6 +13,10 @@ class Initialize:
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
         self.ospath = os.path.dirname(os.path.realpath(__file__))
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
         
     def CMSmapUpdate(self):
         success = False
@@ -156,7 +160,6 @@ class Scanner:
         self.force = None
         self.threads = None
         self.file = None
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -276,14 +279,19 @@ class WPScan:
         self.theme = None
         self.notExistingCode = 404
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
+        self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
+        self.genChecker = GenericChecks(url)
+        self.genChecker.NotExisitingLength()
         self.ospath = os.path.dirname(os.path.realpath(__file__))
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
         self.plugins = [line.strip() for line in open(self.ospath+'wp_plugins.txt')]
         self.versions = [line.strip() for line in open(self.ospath+'wp_versions.txt')]
         self.themes = [line.strip() for line in open(self.ospath+'wp_themes.txt')]
         self.timthumbs = [line.strip() for line in open(self.ospath+'wp_timthumbs.txt')]
-        self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
-        self.genChecker = GenericChecks(url)
-        self.genChecker.NotExisitingLength()
+            
 
     def WPrun(self):
         msg = "CMS Detection: Wordpress"; report.info(msg)
@@ -574,12 +582,16 @@ class JooScan:
         self.notExistingCode = 404
         self.weakpsw = ['password', 'admin','123456','Password1'] # 5th attempt is the username 
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        self.plugins = [line.strip() for line in open(self.ospath+'joomla_plugins.txt')]
-        self.versions = [line.strip() for line in open(self.ospath+'joomla_versions.txt')]
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
+        self.plugins = [line.strip() for line in open(self.ospath+'joomla_plugins.txt')]
+        self.versions = [line.strip() for line in open(self.ospath+'joomla_versions.txt')]
         
     def Joorun(self):
         msg = "CMS Detection: Joomla"; report.info(msg)
@@ -745,15 +757,19 @@ class DruScan:
         self.pluginPath = "/modules/"
         self.forgottenPsw = "/?q=user/password"
         self.weakpsw = ['password', 'admin','123456','Password1'] # 5th attempt is the username
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        self.plugins = [line.strip() for line in open(self.ospath+'drupal_plugins.txt')]
-        self.versions = [line.strip() for line in open(self.ospath+'drupal_versions.txt')]
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
         self.usernames = []
         self.pluginsFound = []
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
+        self.plugins = [line.strip() for line in open(self.ospath+'drupal_plugins.txt')]
+        self.versions = [line.strip() for line in open(self.ospath+'drupal_versions.txt')]
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
@@ -1483,10 +1499,14 @@ class GenericChecks:
         self.notExistingCode = 404
         self.queue_num = 5
         self.thread_num = 5
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        self.commFiles = [line.strip() for line in open(self.ospath+'common_files.txt')]
         self.commExt=['.txt', '.php', '/' ]
         self.notValidLen = []
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
+        self.commFiles = [line.strip() for line in open(self.ospath+'common_files.txt')]
         
     def DirectoryListing(self,relPath):
         self.relPath = relPath
@@ -1770,7 +1790,7 @@ if __name__ == "__main__":
     
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit)
-
+    
     # if plugins don't exist (first time of running) then initialize
     if not os.path.exists(scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt'):
         initializer = Initialize()
