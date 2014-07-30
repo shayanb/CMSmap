@@ -1793,7 +1793,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, exit)
     
     # if plugins don't exist (first time of running) then initialize
-    if not os.path.exists(scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt'):
+    if not scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt':
         initializer = Initialize()
         initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
