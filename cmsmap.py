@@ -161,6 +161,10 @@ class Scanner:
         self.force = None
         self.threads = None
         self.file = None
+        if platform.system() != "Windows":
+            self.ospath = self.ospath+"/"
+        else:
+            self.ospath = self.ospath+"\\"
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -1793,7 +1797,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, exit)
     
     # if plugins don't exist (first time of running) then initialize
-    if not scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt':
+    if not (scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt'):
         initializer = Initialize()
         initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
