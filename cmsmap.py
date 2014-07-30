@@ -12,6 +12,7 @@ class Initialize:
     def __init__(self):
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
+        self.path = os.path.dirname(os.path.realpath(__file__))
         
     def CMSmapUpdate(self):
         success = False
@@ -31,7 +32,7 @@ class Initialize:
     def GetWordPressPlugins(self):
         # Download Wordpress Plugins from Wordpress SVN website and popular Wordpress plugins page
         print "[*] Downloading WordPress plugins"
-        f = open("wp_plugins.txt", "a")
+        f = open(self.path+"wp_plugins.txt", "a")
         
         # from SVN Website
         htmltext = urllib2.urlopen("http://plugins.svn.wordpress.org").read()
@@ -71,7 +72,7 @@ class Initialize:
    
     def GetWordpressPluginsExploitDB(self):
         # Download Wordpress Plugins from ExploitDB website
-        f = open("wp_plugins.txt", "a")
+        f = open(self.path+"wp_plugins.txt", "a")
         print "[-] Downloading Wordpress plugins from ExploitDB website"     
         htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_page=1&filter_description=Wordpress").read()
         regex ='filter_page=(.+?)\t\t\t.*>&gt;&gt;</a>'
@@ -134,7 +135,7 @@ class Initialize:
     def GetDrupalPlugins(self):
         # Download Drupal Plugins from Drupal website
         print "[-] Downloading Drupal plugins"
-        f = open("drupal_plugins.txt", "a")
+        f = open(self.paht+"drupal_plugins.txt", "a")
         for n in range(0,969):
             htmltext = urllib2.urlopen("https://drupal.org/project/project_module?page="+str(n)+"&solrsort=iss_project_release_usage%20desc&").read()
             regex = '<a href="/project/(\w*?)">'
@@ -144,7 +145,7 @@ class Initialize:
             sys.stdout.write('\r')
             sys.stdout.write("[%-100s] %d%%" % ('='*((100*(n+1))/969), (100*(n+1))/969))
             sys.stdout.flush()            
-        print "[-] Drupal Plugin File: %s" % ('drupal_plugins.txt') 
+        print "[-] Drupal Plugin File: %s" % (str(self.path+'drupal_plugins.txt')) 
 
 class Scanner:
     # Detect type of CMS -> Maybe add it to the main after Initialiazer 
@@ -274,10 +275,11 @@ class WPScan:
         self.theme = None
         self.notExistingCode = 404
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
-        self.plugins = [line.strip() for line in open('wp_plugins.txt')]
-        self.versions = [line.strip() for line in open('wp_versions.txt')]
-        self.themes = [line.strip() for line in open('wp_themes.txt')]
-        self.timthumbs = [line.strip() for line in open('wp_timthumbs.txt')]
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        self.plugins = [line.strip() for line in open(self.ospath+'wp_plugins.txt')]
+        self.versions = [line.strip() for line in open(self.ospath+'wp_versions.txt')]
+        self.themes = [line.strip() for line in open(self.ospath+'wp_themes.txt')]
+        self.timthumbs = [line.strip() for line in open(self.ospath+'wp_timthumbs.txt')]
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
@@ -571,8 +573,9 @@ class JooScan:
         self.notExistingCode = 404
         self.weakpsw = ['password', 'admin','123456','Password1'] # 5th attempt is the username 
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
-        self.plugins = [line.strip() for line in open('joomla_plugins.txt')]
-        self.versions = [line.strip() for line in open('joomla_versions.txt')]
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        self.plugins = [line.strip() for line in open(self.ospath+'joomla_plugins.txt')]
+        self.versions = [line.strip() for line in open(self.ospath+'joomla_versions.txt')]
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
@@ -741,8 +744,9 @@ class DruScan:
         self.pluginPath = "/modules/"
         self.forgottenPsw = "/?q=user/password"
         self.weakpsw = ['password', 'admin','123456','Password1'] # 5th attempt is the username
-        self.plugins = [line.strip() for line in open('drupal_plugins.txt')]
-        self.versions = [line.strip() for line in open('drupal_versions.txt')]
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        self.plugins = [line.strip() for line in open(self.ospath+'drupal_plugins.txt')]
+        self.versions = [line.strip() for line in open(self.ospath+'drupal_versions.txt')]
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
         self.usernames = []
         self.pluginsFound = []
@@ -1478,7 +1482,8 @@ class GenericChecks:
         self.notExistingCode = 404
         self.queue_num = 5
         self.thread_num = 5
-        self.commFiles = [line.strip() for line in open('common_files.txt')]
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
+        self.commFiles = [line.strip() for line in open(self.ospath+'common_files.txt')]
         self.commExt=['.txt', '.php', '/' ]
         self.notValidLen = []
         
