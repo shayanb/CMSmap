@@ -12,7 +12,7 @@ class Initialize:
     def __init__(self):
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
-        self.path = os.path.dirname(os.path.realpath(__file__))
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
         
     def CMSmapUpdate(self):
         success = False
@@ -32,7 +32,7 @@ class Initialize:
     def GetWordPressPlugins(self):
         # Download Wordpress Plugins from Wordpress SVN website and popular Wordpress plugins page
         print "[*] Downloading WordPress plugins"
-        f = open(self.path+"wp_plugins.txt", "a")
+        f = open(self.ospath+"wp_plugins.txt", "a")
         
         # from SVN Website
         htmltext = urllib2.urlopen("http://plugins.svn.wordpress.org").read()
@@ -156,6 +156,7 @@ class Scanner:
         self.force = None
         self.threads = None
         self.file = None
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -1771,7 +1772,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, exit)
 
     # if plugins don't exist (first time of running) then initialize
-    if not os.path.exists('wp_plugins.txt' or 'joomla_plugins.txt' or 'drupal_plugins.txt'):
+    if not os.path.exists(scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt'):
         initializer = Initialize()
         initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
