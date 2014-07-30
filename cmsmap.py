@@ -20,12 +20,13 @@ class Initialize:
         
     def CMSmapUpdate(self):
         success = False
-        if not os.path.exists(".git"):
+        if not self.ospath+".git":
             print "[!] Git Repository Not Found. Please download the latest version of CMSmap from GitHub repository"
             print "[!] Example: git clone https://github.com/Dionach/cmsmap"
         else:
             print "[*] Updating CMSmap to the latest version from GitHub repository... "
-            process = os.system("git pull")
+            os.chdir(self.ospath)
+            process = os.system("git pull ")
             if process == 0 : success = True
         if success :
             print "[*] CMSmap is now updated to the latest version!"
