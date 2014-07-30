@@ -161,6 +161,7 @@ class Scanner:
         self.force = None
         self.threads = None
         self.file = None
+        self.ospath = os.path.dirname(os.path.realpath(__file__))
         if platform.system() != "Windows":
             self.ospath = self.ospath+"/"
         else:
