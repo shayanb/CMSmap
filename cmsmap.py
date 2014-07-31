@@ -161,11 +161,6 @@ class Scanner:
         self.force = None
         self.threads = None
         self.file = None
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
-        else:
-            self.ospath = self.ospath+"\\"
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -287,18 +282,12 @@ class WPScan:
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
-        self.genChecker.NotExisitingLength()
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
-        else:
-            self.ospath = self.ospath+"\\"
-        self.plugins = [line.strip() for line in open(self.ospath+'wp_plugins.txt')]
-        self.versions = [line.strip() for line in open(self.ospath+'wp_versions.txt')]
-        self.themes = [line.strip() for line in open(self.ospath+'wp_themes.txt')]
-        self.timthumbs = [line.strip() for line in open(self.ospath+'wp_timthumbs.txt')]
+        self.genChecker.NotExisitingLength()       
+        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_versions.txt'))]
+        self.themes = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_themes.txt'))]
+        self.timthumbs = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_timthumbs.txt'))]
             
-
     def WPrun(self):
         msg = "CMS Detection: Wordpress"; report.info(msg)
         self.WPVersion()
@@ -591,13 +580,8 @@ class JooScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
-        else:
-            self.ospath = self.ospath+"\\"
-        self.plugins = [line.strip() for line in open(self.ospath+'joomla_plugins.txt')]
-        self.versions = [line.strip() for line in open(self.ospath+'joomla_versions.txt')]
+        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_versions.txt'))]
         
     def Joorun(self):
         msg = "CMS Detection: Joomla"; report.info(msg)
@@ -769,13 +753,8 @@ class DruScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
-        else:
-            self.ospath = self.ospath+"\\"
-        self.plugins = [line.strip() for line in open(self.ospath+'drupal_plugins.txt')]
-        self.versions = [line.strip() for line in open(self.ospath+'drupal_versions.txt')]
+        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_versions.txt'))]
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
@@ -1507,12 +1486,7 @@ class GenericChecks:
         self.thread_num = 5
         self.commExt=['.txt', '.php', '/' ]
         self.notValidLen = []
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
-        else:
-            self.ospath = self.ospath+"\\"
-        self.commFiles = [line.strip() for line in open(self.ospath+'common_files.txt')]
+        self.commFiles = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'common_files.txt'))]
         
     def DirectoryListing(self,relPath):
         self.relPath = relPath
@@ -1798,7 +1772,11 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, exit)
     
     # if plugins don't exist (first time of running) then initialize
-    if not (scanner.ospath+'wp_plugins.txt' or scanner.ospath+'joomla_plugins.txt' or scanner.ospath+'drupal_plugins.txt'):
+    wp_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_plugins.txt')
+    joomla_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_plugins.txt')
+    drupal_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_plugins.txt')
+    
+    if not (wp_plugins or joomla_plugins or drupal_plugins):
         initializer = Initialize()
         initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
