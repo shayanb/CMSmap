@@ -200,9 +200,9 @@ class Scanner:
     def FindCMSType(self):
         req = urllib2.Request(self.url,None,self.headers)
         try:
-            #GenericChecks(self.url).HTTPSCheck()
-            #GenericChecks(self.url).HeadersCheck()
-            #GenericChecks(self.url).RobotsTXT()
+            GenericChecks(self.url).HTTPSCheck()
+            GenericChecks(self.url).HeadersCheck()
+            GenericChecks(self.url).RobotsTXT()
             htmltext = urllib2.urlopen(req).read()
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php")
@@ -786,10 +786,10 @@ class DruScan:
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
-        #self.DruVersion()
-        #self.Drutheme = self.DruTheme()
-        #ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
-        #self.DruConfigFiles()
+        self.DruVersion()
+        self.Drutheme = self.DruTheme()
+        ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
+        self.DruConfigFiles()
         self.DruViews()
         self.DruBlog()
         BruteForcer(self.url,self.usernames,self.weakpsw).Drurun()
