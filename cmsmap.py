@@ -200,9 +200,9 @@ class Scanner:
     def FindCMSType(self):
         req = urllib2.Request(self.url,None,self.headers)
         try:
-            GenericChecks(self.url).HTTPSCheck()
-            GenericChecks(self.url).HeadersCheck()
-            GenericChecks(self.url).RobotsTXT()
+            #GenericChecks(self.url).HTTPSCheck()
+            #GenericChecks(self.url).HeadersCheck()
+            #GenericChecks(self.url).RobotsTXT()
             htmltext = urllib2.urlopen(req).read()
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php")
@@ -786,10 +786,10 @@ class DruScan:
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
-        self.DruVersion()
-        self.Drutheme = self.DruTheme()
-        ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
-        self.DruConfigFiles()
+        #self.DruVersion()
+        #self.Drutheme = self.DruTheme()
+        #ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
+        #self.DruConfigFiles()
         self.DruViews()
         self.DruBlog()
         BruteForcer(self.url,self.usernames,self.weakpsw).Drurun()
@@ -894,12 +894,9 @@ class DruScan:
         req = urllib2.Request(self.url+"/?q=admin/views/ajax/autocomplete/user/NotExisingUser1234!",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
-            noRedirOpener.open(req)
-        except urllib2.HTTPError, e:
-            #print e.code
-            # If NotExisingUser1234! doesn't return 200 then search users
-            try:
-                urllib2.urlopen(self.url+self.views)
+            htmltext = noRedirOpener.open(req).read()
+            #If NotExisingUser1234 returns [  ], then enumerate users
+            if htmltext == '[  ]':
                 for letter in self.alphanum:
                     htmltext = urllib2.urlopen(self.url+self.views+letter).read()
                     regex = '"(.+?)"'
@@ -908,9 +905,8 @@ class DruScan:
                 usernames = sorted(set(usernames))
                 for user in usernames:
                     msg = user; report.info(msg)
-            except urllib2.HTTPError, e:
-                #print e.code
-                pass
+        except urllib2.HTTPError, e:
+            pass
         
     def DruBlog(self):
         self.blog = "/?q=blog/"
@@ -1829,7 +1825,6 @@ if __name__ == "__main__":
     dru_plugins = os.path.join(dataPath, 'dru_plugins_small.txt')
     
     if not os.path.isfile(wp_plugins or wp_themes or joo_plugins or dru_plugins):
-        initializer = Initialize()
         #initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
         initializer.GetWordpressPluginsExploitDB()
