@@ -30,13 +30,14 @@ Usage
 	          -i, --input     scan multiple targets listed in a given text file
 	          -o, --output    save output in a file
 	          -k, --crack     password hashes file
-	          -w, --wordlist  wordlist file (Default: rockyou.txt - WordPress only)
-	          -U, --update    update CMSmap to the latest version
+	          -w, --wordlist  wordlist file (Default: rockyou.txt - WordPress only)         
+	          -U, --update    (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules
 	          -h, --help      show this help
 	          -f, --force     force scan (W)ordpress, (J)oomla or (D)rupal
+	          -F, --fullscan  full scan using large plugin lists. Slow! (Default: false)   
 	          
 	Example: cmsmap.py -t https://example.com
-             cmsmap.py -t https://example.com -f W
+             cmsmap.py -t https://example.com -f W -F
              cmsmap.py -t https://example.com -i targets.txt -o output.txt
 	         cmsmap.py -t https://example.com -u admin -p passwords.txt
 	         cmsmap.py -k hashes.txt

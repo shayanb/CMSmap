@@ -12,12 +12,29 @@ class Initialize:
     def __init__(self):
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
-        self.ospath = os.path.dirname(os.path.realpath(__file__))
-        if platform.system() != "Windows":
-            self.ospath = self.ospath+"/"
+        self.ospath = dataPath
+        self.forceUpdate = None
+        self.wp_plugins_small = os.path.join(self.ospath,"wp_plugins_small.txt")
+        self.wp_themes_small = os.path.join(self.ospath,"wp_themes_small.txt")
+        self.joo_plugins_small = os.path.join(self.ospath,"joo_plugins_small.txt")
+        self.dru_plugins_small = os.path.join(self.ospath,"dru_plugins_small.txt")
+        self.wp_exploitdb_url = "http://www.exploit-db.com/search/?action=search&filter_page=1&filter_description=Wordpress"
+        self.joo_exploitdb_url = "http://www.exploit-db.com/search/?action=search&filter_page=1&filter_description=Joomla"
+
+    def UpdateRun(self):
+        if self.forceUpdate == 'C':
+            self.CMSmapUpdate()
+        elif self.forceUpdate == 'W':
+            self.GetWordpressPluginsExploitDB()
+            self.GetWordpressThemesExploitDB()
+        elif self.forceUpdate == 'J':
+            self.GetJoomlaPluginsExploitDB()
+        elif self.forceUpdate == 'D':
+            self.GetDrupalPlugins()
         else:
-            self.ospath = self.ospath+"\\"
-        
+            msg = "Not Valid Option Provided: use (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules"; report.error(msg)
+            sys.exit()  
+
     def CMSmapUpdate(self):
         success = False
         if not self.ospath+".git":
@@ -26,7 +43,7 @@ class Initialize:
         else:
             print "[*] Updating CMSmap to the latest version from GitHub repository... "
             os.chdir(self.ospath)
-            process = os.system("git pull ")
+            process = os.system("git pull")
             if process == 0 : success = True
         if success :
             print "[*] CMSmap is now updated to the latest version!"
@@ -37,7 +54,7 @@ class Initialize:
     def GetWordPressPlugins(self):
         # Download Wordpress Plugins from Wordpress SVN website and popular Wordpress plugins page
         print "[*] Downloading WordPress plugins"
-        f = open(self.ospath+"wp_plugins.txt", "a")
+        f = open(os.path.join(self.ospath,"wp_plugins.txt"), "a")
         
         # from SVN Website
         htmltext = urllib2.urlopen("http://plugins.svn.wordpress.org").read()
@@ -73,84 +90,88 @@ class Initialize:
         # write to file
         #for plugin in plugins: f.write("%s\n" % plugin, "a")
         #f.close()             
-        print "[-] Wordpress Plugin File: %s" % ('wp_plugins.txt')
+        print "[-] Wordpress Plugin File: %s" % (os.path.join(self.ospath,'wp_plugins.txt'))
    
     def GetWordpressPluginsExploitDB(self):
-        # Download Wordpress Plugins from ExploitDB website
-        f = open(self.path+"wp_plugins.txt", "a")
-        print "[-] Downloading Wordpress plugins from ExploitDB website"     
-        htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_page=1&filter_description=Wordpress").read()
-        regex ='filter_page=(.+?)\t\t\t.*>&gt;&gt;</a>'
-        pattern =  re.compile(regex)
-        pages = re.findall(pattern,htmltext)
-        for page in range(1,int(pages[0])):
-            time.sleep(2)
-            request = urllib2.Request("http://www.exploit-db.com/search/?action=search&filter_page="+str(page)+"&filter_description=Wordpress",None,self.headers)
-            htmltext = urllib2.urlopen(request).read()
-            regex = '<a href="http://www.exploit-db.com/download/(.+?)">'
-            pattern =  re.compile(regex)
-            ExploitID = re.findall(pattern,htmltext)
-            print page
-            for Eid in ExploitID:
-                htmltext = urllib2.urlopen("http://www.exploit-db.com/download/"+str(Eid)+"/").read()
-                regex = '/plugins/(.+?)/'
-                pattern =  re.compile(regex)
-                WPplugins = re.findall(pattern,htmltext)
-                print Eid
-                print WPplugins
-                for plugin in WPplugins:
-                    try:
-                        f.write("%s\n" % plugin)
-                    except IndexError:
-                        pass
-        f.close()
-        print "[-] Wordpress Plugin File: %s" % ('wp_plugins.txt')     
+        self.GetExploitDBPlugins(self.wp_exploitdb_url, self.wp_plugins_small, 'Wordpress', 'wp-content/plugins/(.+?)/')
+        
+    def GetWordpressThemesExploitDB(self):
+        self.GetExploitDBPlugins(self.wp_exploitdb_url, self.wp_themes_small, 'Wordpress', 'wp-content/themes/([\w\-\_]*)/')
 
     def GetJoomlaPlugins(self):
         # Not Implemented yet
         pass
     
     def GetJoomlaPluginsExploitDB(self):
-        # Download Joomla Plugins from ExploitDB website
-        f = open("joomla_plugins.txt", "a")
-        print "[*] Downloading Joomla plugins from ExploitDB website"
-        htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_page=1&filter_description=Joomla").read()
-        regex ='filter_page=(.+?)\t\t\t.*>&gt;&gt;</a>'
-        pattern =  re.compile(regex)
-        pages = re.findall(pattern,htmltext)
-        for page in range(1,int(pages[0])):
-            time.sleep(2)
-            request = urllib2.Request("http://www.exploit-db.com/search/?action=search&filter_page="+str(page)+"&filter_description=Joomla",None,self.headers)
-            htmltext = urllib2.urlopen(request).read()
-            regex = '<a href="http://www.exploit-db.com/download/(.+?)">'
-            pattern =  re.compile(regex)
-            ExploitID = re.findall(pattern,htmltext)
-            for Eid in ExploitID:
-                htmltext = urllib2.urlopen("http://www.exploit-db.com/exploits/"+str(Eid)+"/").read()
-                regex = '\?option=(.+?)\&'
-                pattern =  re.compile(regex)
-                JoomlaComponent = re.findall(pattern,htmltext)
-                try:
-                    f.write("%s\n" % JoomlaComponent[0])
-                except IndexError:
-                    pass
-        f.close()
-        print "[-] Joomla Plugin File: %s" % ('joomla_plugins.txt')
+        self.GetExploitDBPlugins(self.joo_exploitdb_url, self.joo_plugins_small, 'Joomla', '\?option=(com.+?)\&')
 
     def GetDrupalPlugins(self):
         # Download Drupal Plugins from Drupal website
-        print "[-] Downloading Drupal plugins"
-        f = open(self.paht+"drupal_plugins.txt", "a")
-        for n in range(0,969):
-            htmltext = urllib2.urlopen("https://drupal.org/project/project_module?page="+str(n)+"&solrsort=iss_project_release_usage%20desc&").read()
-            regex = '<a href="/project/(\w*?)">'
+        msg = "Downloading plugins"; report.info(msg)
+        f = open(self.dru_plugins_small, "a")
+        self.dru_plugins_small_pages = int(10)
+        
+        for page in range(0,self.dru_plugins_small_pages):
+            htmltext = urllib2.urlopen("https://drupal.org/project/project_module?page="+str(page)+"&f[4]=sm_field_project_type:full&text=&solrsort=iss_project_release_usage+desc&").read()
+            regex = '<h2><a href="/project/(\w*?)">'
             pattern =  re.compile(regex)
-            plugins_per_page = re.findall(pattern,htmltext)
-            for plugin in plugins_per_page: f.write("%s\n" % plugin) 
-            sys.stdout.write('\r')
-            sys.stdout.write("[%-100s] %d%%" % ('='*((100*(n+1))/969), (100*(n+1))/969))
+            self.dru_plugins = re.findall(pattern,htmltext)
+            self.dru_plugins = sorted(set(self.dru_plugins)) 
+            for plugin in self.dru_plugins:
+                print plugin
+                f.write("%s\n" % plugin) 
+                sys.stdout.write("\r%d%%" %((100*(page+1))/self.dru_plugins_small_pages))
+                sys.stdout.flush()
             sys.stdout.flush()            
-        print "[-] Drupal Plugin File: %s" % (str(self.path+'drupal_plugins.txt')) 
+        
+        msg = "Drupal Plugin File: "+ self.dru_plugins_small; report.info(msg)
+        
+    def GetExploitDBPlugins(self,exploitdb_url,plugins_small,filter_description,regex):
+        self.exploitdb_url = exploitdb_url
+        self.plugins_small = plugins_small
+        self.filter_description = filter_description
+        self.regex = regex
+        # Download Plugins from ExploitDB website
+        msg = "Downloading plugins from ExploitDB website"; report.info(msg)    
+        # Save to file 
+        f = open(os.path.join(self.ospath, self.plugins_small), "a") 
+        # Read html response
+        htmltext = urllib2.urlopen(self.exploitdb_url).read()
+        regex ='filter_page=(.+?)\t\t\t.*>&gt;&gt;</a>'
+        pattern =  re.compile(regex)
+        self.pages = re.findall(pattern,htmltext)
+        self.pages = self.pages[0]
+        #print "Total pages: "+str(pages)
+        for self.page in range(1,int(self.pages)):
+            time.sleep(2)
+            self.exploitdb_url_page = "http://www.exploit-db.com/search/?action=search&filter_page="+str(self.page)+"&filter_description="+self.filter_description
+            request = urllib2.Request(self.exploitdb_url_page,None,self.headers)
+            htmltext = urllib2.urlopen(request).read()
+            pattern =  re.compile('<a href="http://www.exploit-db.com/download/(.+?)">')
+            self.ExploitID = re.findall(pattern,htmltext)
+            #print "Page: "+str(self.page)
+            for self.Eid in self.ExploitID:
+                htmltext = urllib2.urlopen("http://www.exploit-db.com/download/"+str(self.Eid)+"/").read()
+                pattern =  re.compile(self.regex)
+                self.ExploitDBplugins = re.findall(pattern,htmltext)
+                #print self.regex
+                #print self.Eid
+                #print self.ExploitDBplugins
+                #print htmltext
+                sys.stdout.write("\r%d%%" %((100*(int(self.page)+1))/int(self.pages)))
+                sys.stdout.flush()
+                # Sorted Unique
+                self.ExploitDBplugins = sorted(set(self.ExploitDBplugins))
+                for self.plugin in self.ExploitDBplugins:
+                    print self.plugin
+                    if not re.search('.php',self.plugin):
+                        try:
+                            f.write("%s\n" % self.plugin)
+                        except IndexError:
+                            pass
+        f.close()
+        sys.stdout.write("\r")
+        msg = "Plugin File: " +self.plugins_small; report.info(msg)
 
 class Scanner:
     # Detect type of CMS -> Maybe add it to the main after Initialiazer 
@@ -282,11 +303,13 @@ class WPScan:
         self.confFiles=['','.php~','.php.txt','.php.old','.php_old','.php-old','.php.save','.php.swp','.php.swo','.php_bak','.php-bak','.php.original','.php.old','.php.orig','.php.bak','.save','.old','.bak','.orig','.original','.txt']
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
-        self.genChecker.NotExisitingLength()       
-        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_plugins.txt'))]
-        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_versions.txt'))]
-        self.themes = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_themes.txt'))]
-        self.timthumbs = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_timthumbs.txt'))]
+        self.genChecker.NotExisitingLength()
+        self.plugins_small = [line.strip() for line in open(os.path.join(dataPath, 'wp_plugins_small.txt'))]
+        self.plugins = [line.strip() for line in open(os.path.join(dataPath, 'wp_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(dataPath, 'wp_versions.txt'))]
+        self.themes = [line.strip() for line in open(os.path.join(dataPath, 'wp_themes.txt'))]
+        self.themes_small = [line.strip() for line in open(os.path.join(dataPath, 'wp_themes_small.txt'))]
+        self.timthumbs = [line.strip() for line in open(os.path.join(dataPath, 'wp_timthumbs.txt'))]
             
     def WPrun(self):
         msg = "CMS Detection: Wordpress"; report.info(msg)
@@ -451,7 +474,7 @@ class WPScan:
             pass
 
     def WPDirsListing(self):
-        msg = "Checking for Directory Listing Enabled ..."; print msg
+        msg = "Checking for Directory Listing Enabled ..."; report.info(msg)
         report.WriteTextFile(msg)
         GenericChecks(self.url).DirectoryListing('/wp-content/')
         GenericChecks(self.url).DirectoryListing('/wp-content/'+self.theme)
@@ -472,7 +495,8 @@ class WPScan:
             self.notExistingCode = e.code
                         
     def WPplugins(self):
-        msg =  "Searching Wordpress Plugins ..."; report.message(msg)           
+        msg =  "Searching Wordpress Plugins ..."; report.message(msg)
+        if  not FullScan : self.plugins = self.plugins_small
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)        
@@ -511,6 +535,7 @@ class WPScan:
             
     def WPThemes(self):
         msg = "Searching Wordpress Themes ..."; report.message(msg)
+        if  not FullScan : self.themes = self.themes_small
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.themes)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)
@@ -580,8 +605,9 @@ class JooScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
-        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_plugins.txt'))]
-        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_versions.txt'))]
+        self.plugins_small = [line.strip() for line in open(os.path.join(dataPath, 'joo_plugins_small.txt'))]
+        self.plugins = [line.strip() for line in open(os.path.join(dataPath, 'joomla_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(dataPath, 'joomla_versions.txt'))]
         
     def Joorun(self):
         msg = "CMS Detection: Joomla"; report.info(msg)
@@ -718,6 +744,7 @@ class JooScan:
             
     def JooComponents(self):
         msg = "Searching Joomla Components ..."; report.message(msg)
+        if  not FullScan : self.plugins = self.plugins_small
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)        
@@ -753,8 +780,9 @@ class DruScan:
         self.widgets = ['Progress: ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.genChecker = GenericChecks(url)
         self.genChecker.NotExisitingLength()
-        self.plugins = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_plugins.txt'))]
-        self.versions = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_versions.txt'))]
+        self.plugins_small = [line.strip() for line in open(os.path.join(dataPath, 'dru_plugins_small.txt'))]
+        self.plugins = [line.strip() for line in open(os.path.join(dataPath, 'drupal_plugins.txt'))]
+        self.versions = [line.strip() for line in open(os.path.join(dataPath, 'drupal_versions.txt'))]
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
@@ -949,7 +977,7 @@ class DruScan:
                        
     def DruModules(self):
         msg = "Search Drupal Module ..."; report.message(msg)
-        report.WriteTextFile(msg)
+        if  not FullScan : self.plugins = self.plugins_small
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)
@@ -972,6 +1000,7 @@ class ExploitDBSearch:
         self.cmstype = cmstype
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
+        self.EDB = []
         
     def Core(self):
         if self.query is not None:
@@ -996,7 +1025,21 @@ class ExploitDBSearch:
                 ExploitID = re.findall(pattern,htmltext)
                 msg =  plugin; report.info(msg)
                 for Eid in ExploitID:
-                    msg = "Vulnerable Plugin "+plugin+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+                    # If Eid hasn't been already found, then go on
+                    if Eid not in self.EDB:
+                        req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
+                        htmltext = urllib2.urlopen(req).read()
+                        self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
+                        self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                        self.verified = 'Yes'
+                        if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                        if self.title and self.date:
+                            msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                            report.medium(msg)
+                        else:
+                            msg = " EDB-ID: "+Eid; report.medium(msg)
+                self.EDB = self.EDB + ExploitID
+                self.EDB = sorted(set(self.EDB))
         else:
             pass
         
@@ -1484,9 +1527,9 @@ class GenericChecks:
         self.notExistingCode = 404
         self.queue_num = 5
         self.thread_num = 5
-        self.commExt=['.txt', '.php', '/' ]
+        self.commExt=['.txt', '.php', '/', '.html' ]
         self.notValidLen = []
-        self.commFiles = [line.strip() for line in open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'common_files.txt'))]
+        self.commFiles = [line.strip() for line in open(os.path.join(dataPath, 'common_files.txt'))]
         
     def DirectoryListing(self,relPath):
         self.relPath = relPath
@@ -1673,6 +1716,8 @@ verbose = False
 CMSmapUpdate = False
 BruteForcingAttack = False
 CrackingPasswords = False
+FullScan = False
+dataPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 output = False
 threads = 5
 wordlist = 'wordlist/rockyou.txt'
@@ -1702,12 +1747,13 @@ def usage(version):
           -o, --output    save output in a file
           -k, --crack     password hashes file (WordPress and Joomla only)
           -w, --wordlist  wordlist file (Default: rockyou.txt)
-          -U, --update    update CMSmap to the latest version
+          -U, --update    (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules
           -h, --help      show this help
           -f, --force     force scan (W)ordpress, (J)oomla or (D)rupal
+          -F, --fullscan  full scan using large plugin lists. Slow! (Default: false)       
           """
     print "Example: "+ os.path.basename(sys.argv[0]) +" -t https://example.com"
-    print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -f W "
+    print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -f W -F"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -i targets.txt -o output.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -u admin -p passwords.txt"
     print "         "+ os.path.basename(sys.argv[0]) +" -k hashes.txt"
@@ -1717,10 +1763,11 @@ if __name__ == "__main__":
     
     scanner = Scanner()
     report = Report()
+    initializer = Initialize()
     
     if sys.argv[1:]:
         try:
-            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhUf:i:', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update","input="])
+            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhUf:i:F', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update","input=","fullscan"])
         except getopt.GetoptError as err:
             # print help information and exit:
             print(err) # print something like "option -a not recognized"
@@ -1747,7 +1794,7 @@ if __name__ == "__main__":
                 wordlist = a
             elif o in ("-T", "--threads"):
                 threads = int(a)
-                print "[-] Threads Set : "+str(threads)
+                msg = "Threads Set : "+str(threads); report.info(msg)
             elif o in("-o", "--output"):
                 output = True
                 report.fn = a
@@ -1755,6 +1802,9 @@ if __name__ == "__main__":
                 scanner.file = a
             elif o in("-U", "--update"):
                 CMSmapUpdate = True
+                initializer.forceUpdate = a
+            elif o in("-F", "--fullscan"):
+                FullScan = True
             elif o in("-v", "--verbose"):
                 verbose = True
             else:
@@ -1762,7 +1812,7 @@ if __name__ == "__main__":
                 sys.exit()
     else:
         usage(version)
-        sys.exit()
+        #sys.exit()
     
     start = time.time()
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')
@@ -1771,21 +1821,24 @@ if __name__ == "__main__":
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit)
     
-    # if plugins don't exist (first time of running) then initialize
-    wp_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wp_plugins.txt')
-    joomla_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'joomla_plugins.txt')
-    drupal_plugins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'drupal_plugins.txt')
     
-    if not (wp_plugins or joomla_plugins or drupal_plugins):
+    # if plugins don't exist (first time of running) then initialize
+    wp_plugins = os.path.join(dataPath, 'wp_plugins_small.txt')
+    wp_themes = os.path.join(dataPath, 'wp_themes_small.txt')
+    joo_plugins = os.path.join(dataPath, 'joo_plugins_small.txt')
+    dru_plugins = os.path.join(dataPath, 'dru_plugins_small.txt')
+    
+    if not os.path.isfile(wp_plugins or wp_themes or joo_plugins or dru_plugins):
         initializer = Initialize()
-        initializer.GetWordPressPlugins()
+        #initializer.GetWordPressPlugins()
         initializer.GetJoomlaPluginsExploitDB()
         initializer.GetWordpressPluginsExploitDB()
-        initializer.GetDrupalPlugins()
+        initializer.GetWordpressThemesExploitDB()
+        #initializer.GetDrupalPlugins()
+        sys.exit()
 
-    if CMSmapUpdate :
-        initializer = Initialize()
-        initializer.CMSmapUpdate()
+    if CMSmapUpdate :      
+        initializer.UpdateRun()
     elif BruteForcingAttack :
         BruteForcer(url,usrlist,pswlist).FindCMSType()
     elif CrackingPasswords:
