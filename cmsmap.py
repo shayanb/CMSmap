@@ -996,24 +996,39 @@ class ExploitDBSearch:
         self.cmstype = cmstype
         self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
         self.headers={'User-Agent':self.agent,}
-        self.EDB = []
         
     def Core(self):
         if self.query is not None:
             # Get this value from their classes      
             msg = "Searching Core Vulnerabilities for version "+self.query ; report.verbose(msg)
+            self.EDB = []
             htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"+"+self.query).read()
             regex = '/download/(.+?)">'
             pattern =  re.compile(regex)
             ExploitID = re.findall(pattern,htmltext)
             for Eid in ExploitID:
-                msg = "Vulnerable Core Version "+self.query+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+                # If Eid hasn't been already found, then go on
+                if Eid not in self.EDB:
+                    req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
+                    htmltext = urllib2.urlopen(req).read()
+                    self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
+                    self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                    self.verified = 'Yes'
+                    if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                    if self.title and self.date:
+                        msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                        report.medium(msg)
+                    else:
+                        msg = " EDB-ID: "+Eid; report.medium(msg)
+            self.EDB = self.EDB + ExploitID
+            self.EDB = sorted(set(self.EDB))
         else:
             pass
         
     def Plugins(self):
         if self.query is not None:
             msg = "Searching Vulnerable Plugins from ExploitDB website ..." ; report.message(msg)
+            self.EDB = []
             for plugin in self.query:
                 htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+plugin).read()
                 regex = '/download/(.+?)">'
@@ -1042,13 +1057,28 @@ class ExploitDBSearch:
     def Themes(self):
         if self.query is not None:
             msg = "Searching Vulnerable Theme from ExploitDB website ..."; report.message(msg)
+            self.EDB = []
             for theme in self.query :
                 htmltext = urllib2.urlopen("http://www.exploit-db.com/search/?action=search&filter_description="+self.cmstype+"&filter_exploit_text="+theme).read()
                 regex = '/download/(.+?)">'
                 pattern =  re.compile(regex)
                 ExploitID = re.findall(pattern,htmltext)
                 for Eid in ExploitID:
-                    msg = "Vulnerable Theme "+theme+" Found: http://www.exploit-db.com/exploits/"+Eid; report.medium(msg)
+                    # If Eid hasn't been already found, then go on
+                    if Eid not in self.EDB:
+                        req = urllib2.Request("http://www.exploit-db.com/exploits/"+str(Eid)+"/",None,self.headers)
+                        htmltext = urllib2.urlopen(req).read()
+                        self.title = re.findall(re.compile('<title>(.+?)</title>'),htmltext)
+                        self.date = re.findall(re.compile('>Published: (.+?)</td>'),htmltext)
+                        self.verified = 'Yes'
+                        if re.search(re.compile('Not Verified'),htmltext): self.verified = 'No '
+                        if self.title and self.date:
+                            msg = " EDB-ID: "+Eid+" Date: "+self.date[0] +" Verified: "+self.verified+" Title: "+ self.title[0].replace('&gt;', '>').replace('&lt;','<').replace('&amp;','&')
+                            report.medium(msg)
+                        else:
+                            msg = " EDB-ID: "+Eid; report.medium(msg)
+                self.EDB = self.EDB + ExploitID
+                self.EDB = sorted(set(self.EDB))                
         else:
             pass
 
