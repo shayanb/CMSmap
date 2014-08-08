@@ -326,7 +326,7 @@ class WPScan:
         self.genChecker.AutocompleteOff('/wp-login.php')
         self.WPNotExisitingCode()
         self.WPDefaultFiles()
-        self.genChecker.CommonFiles()
+        #self.genChecker.CommonFiles()
         self.WPplugins()
         ExploitDBSearch(self.url, 'Wordpress', self.pluginsFound).Plugins()
         self.WPThemes()
@@ -350,11 +350,12 @@ class WPScan:
                 version = re.findall('<meta name="generator" content="WordPress (\d+\.\d+[\.\d+]*)"', htmltext)
                 if version:
                     msg = "Wordpress Version: "+version; report.info(msg)
-            if version :
+                    
+            if version in self.versions :
                 for ver in self.versions:
                     ExploitDBSearch(self.url, 'Wordpress', ver).Core()
                     if ver == version:
-                        break        
+                        break                       
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -365,9 +366,9 @@ class WPScan:
             htmltext = urllib2.urlopen(req).read()
             regex = '/wp-content/themes/(.+?)/'
             pattern =  re.compile(regex)
-            CurrentTheme = re.findall(pattern,htmltext)[0]
+            CurrentTheme = re.findall(pattern,htmltext)
             if CurrentTheme:
-                self.theme = CurrentTheme
+                self.theme = CurrentTheme[0]
                 msg = "Wordpress Theme: "+self.theme ; report.info(msg)
                 ExploitDBSearch(self.url, 'Wordpress', [self.theme]).Themes()
         except urllib2.HTTPError, e:
@@ -555,37 +556,48 @@ class WPScan:
     
     def WPXMLRPC_pingback(self):
         msg = "Checking XML-RPC Pingback Vulnerability ..."; report.verbose(msg)
-        self.headers['Content-Type:'] ='text/xml'
         self.postdata = '''<methodCall><methodName>pingback.ping</methodName><params>
                         <param><value><string>http://N0tB3th3re0484940:22/</string></value></param>
                         <param><value><string>'''+self.url+'''</string></value></param>
                         </params></methodCall>'''
         try:
-            req = urllib2.Request(self.url+'/xmlrpc.php',None,self.headers)
-            htmltext = urllib2.urlopen(req).read()
+            req = urllib2.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
+            opener = urllib2.build_opener(MyHandler())
+            htmltext = opener.open(req).read()
             if re.search('<name>16</name>',htmltext):
                 msg = "Website vulnerable to XML-RPC Pingback Force Vulnerability"; report.low(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
-        del self.headers['Content-Type:']
         
     def WPXMLRPC_BF(self):
         msg = "Checking XML-RPC Brute Force Vulnerability ..."; report.verbose(msg)
-        self.headers['Content-Type:'] ='text/xml'
-        self.postdata = '''<methodCall><methodName>wp.getUsersBlogs</methodName><params>
-                        <param><value><string>admin</string></value></param>
-                        <param><value><string></string></value></param>
-                        </params></methodCall>'''
+        self.headers['Content-Type'] ='text/xml'
+        self.postdata = '<methodCall><methodName>wp.getUsersBlogs</methodName><params><param><value><string>admin</string></value></param><param><value><string></string></value></param></params></methodCall>'
         try:
             req = urllib2.Request(self.url+'/xmlrpc.php',self.postdata,self.headers)
-            htmltext = urllib2.urlopen(req).read()
+            #opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=1))
+            opener = urllib2.build_opener(MyHandler())
+            htmltext = opener.open(req).read()
             if re.search('<int>403</int>',htmltext):
                 msg = "Website vulnerable to XML-RPC Brute Force Vulnerability"; report.medium(msg)
         except urllib2.HTTPError, e:
-            #print e.code
+            print e.code
             pass
-        del self.headers['Content-Type:']   
+
+
+class MyResponse(httplib.HTTPResponse):
+    def read(self, amt=None):
+        self.length = None
+        
+        return httplib.HTTPResponse.read(self, amt)
+
+class MyHandler(urllib2.HTTPHandler):
+    def do_open(self, http_class, req):
+        h = httplib.HTTPConnection
+        h.response_class = MyResponse
+        
+        return urllib2.HTTPHandler.do_open(self, h, req)
 
 class JooScan:
     # Scan Joomla site
