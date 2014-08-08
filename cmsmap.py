@@ -32,8 +32,9 @@ class Initialize:
         elif self.forceUpdate == 'D':
             self.GetDrupalPlugins()
         else:
-            msg = "Not Valid Option Provided: use (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules"; report.error(msg)
-            sys.exit()  
+            msg = "Not Valid Option Provided: use (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules"; report.info(msg)
+            msg = "Assuming: (C)MSmap update"; report.info(msg)
+            self.CMSmapUpdate()  
 
     def CMSmapUpdate(self):
         success = False
@@ -1805,7 +1806,7 @@ if __name__ == "__main__":
     
     if sys.argv[1:]:
         try:
-            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhUf:i:F', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update","input=","fullscan"])
+            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhU:f:i:F', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update=","input=","fullscan"])
         except getopt.GetoptError as err:
             # print help information and exit:
             print(err) # print something like "option -a not recognized"
