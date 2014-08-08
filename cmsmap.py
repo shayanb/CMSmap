@@ -580,8 +580,6 @@ class WPScan:
             #opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=1))
             opener = urllib2.build_opener(MyHandler())
             htmltext = opener.open(req).read()
-            print htmltext
-            sys.exit()
             if re.search('<int>403</int>',htmltext):
                 msg = "Website vulnerable to XML-RPC Brute Force Vulnerability"; report.medium(msg)
         except urllib2.HTTPError, e:
