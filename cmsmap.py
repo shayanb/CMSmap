@@ -1851,7 +1851,7 @@ if __name__ == "__main__":
                 sys.exit()
     else:
         usage(version)
-        #sys.exit()
+        sys.exit()
     
     start = time.time()
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')
