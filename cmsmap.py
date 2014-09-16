@@ -800,8 +800,7 @@ class DruScan:
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
         self.DruVersion()
-        self.Drutheme = self.DruTheme()
-        ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
+        self.DruCurrentTheme()
         self.DruConfigFiles()
         self.DruViews()
         self.DruBlog()
@@ -831,12 +830,14 @@ class DruScan:
             #print e.code
             pass
 
-    def DruTheme(self):
+    def DruCurrentTheme(self):
         try:
             htmltext = urllib2.urlopen(self.url+'/index.php').read()
             DruTheme = re.findall("/themes/(.+?)/", htmltext,re.IGNORECASE)
             if DruTheme :
-                msg = "Drupal Theme: "+DruTheme[0]; report.info(msg)
+                self.Drutheme = DruTheme[0]
+                msg = "Drupal Theme: "+ self.Drutheme ; report.info(msg)
+                ExploitDBSearch(self.url, "Drupal", [self.Drutheme]).Themes()
             return DruTheme[0]
         except urllib2.HTTPError, e:
             #print e.code
