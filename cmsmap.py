@@ -252,9 +252,9 @@ class Scanner:
                             msg = "Drupal Config File Not Found: "+self.url+"/sites/default/settings.php"
                             report.verbose(msg)
 
-                            msg = "CMS detection failed"; report.error(msg)
-                            msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
-                            sys.exit()
+            msg = "CMS detection failed"; report.error(msg)
+            msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
+            sys.exit()
                 
         except urllib2.URLError, e:
             msg = "Website Unreachable: "+self.url
