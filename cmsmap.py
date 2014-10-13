@@ -819,9 +819,9 @@ class DruScan:
             htmltext = urllib2.urlopen(self.url+'/CHANGELOG.txt').read()
             regex = 'Drupal (\d+\.\d+),'
             pattern =  re.compile(regex)
-            version = re.findall(pattern,htmltext)[0]
+            version = re.findall(pattern,htmltext)
             if version:
-                msg = "Drupal Version: "+version; report.info(msg)
+                msg = "Drupal Version: "+version[0]; report.info(msg)
                 for ver in self.versions:
                     ExploitDBSearch(self.url, 'Drupal', ver).Core()
                     if ver == version:
