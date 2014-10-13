@@ -228,7 +228,7 @@ class Scanner:
                     JooScan(self.url,self.threads).Joorun()
                 else:
                     #print e.code
-                    msg = "[!] Joomla Config File Not Found: "+self.url+"/configuration.php"
+                    msg = "Joomla Config File Not Found: "+self.url+"/configuration.php"
                     report.verbose(msg)    
             
             # Drupal
@@ -251,15 +251,17 @@ class Scanner:
                             #print e.code
                             msg = "Drupal Config File Not Found: "+self.url+"/sites/default/settings.php"
                             report.verbose(msg)
-
-            msg = "CMS detection failed"; report.error(msg)
-            msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
-            sys.exit()
+                            
+                        msg = "CMS detection failed"; report.error(msg)
+                        msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
+                        sys.exit()
                 
         except urllib2.URLError, e:
             msg = "Website Unreachable: "+self.url
             report.error(msg)
             sys.exit()
+            
+
 
     def CheckURL(self):
         pUrl = urlparse.urlparse(self.url)
