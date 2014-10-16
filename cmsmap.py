@@ -823,7 +823,9 @@ class DruScan:
             pattern =  re.compile(regex)
             version = re.findall(pattern,htmltext)
             if version:
+                self.DruVersion = version[0]
                 msg = "Drupal Version: "+version[0]; report.info(msg)
+                self.DruCore()
                 for ver in self.versions:
                     ExploitDBSearch(self.url, 'Drupal', ver).Core()
                     if ver == version:
@@ -831,6 +833,10 @@ class DruScan:
         except urllib2.HTTPError, e:
             #print e.code
             pass
+        
+    def DruCore(self):
+        if float(self.DruVersion) <= 7.31:
+            msg = "Drupal Vulnerable to SA-CORE-2014-005"; report.high(msg)
 
     def DruCurrentTheme(self):
         try:
