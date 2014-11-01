@@ -5,6 +5,7 @@ import platform, signal
 
 from thirdparty.multipart import multipartpost
 from thirdparty.progressbar import progressbar
+from distutils.version import LooseVersion
 
 class Initialize:
     # Save Wordpress, Joomla and Drupal plugins in a local file
@@ -835,7 +836,7 @@ class DruScan:
             pass
         
     def DruCore(self):
-        if float(self.DruVersion) <= 7.31:
+        if LooseVersion("7") <= LooseVersion(str(self.DruVersion)) <= LooseVersion("7.31"):
             msg = "Drupal Vulnerable to SA-CORE-2014-005"; report.high(msg)
 
     def DruCurrentTheme(self):
