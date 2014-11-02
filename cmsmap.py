@@ -645,9 +645,9 @@ class JooScan:
             htmltext = urllib2.urlopen(self.url+'/joomla.xml').read()
             regex = '<version>(.+?)</version>'
             pattern =  re.compile(regex)
-            version = re.findall(pattern,htmltext)[0]
+            version = re.findall(pattern,htmltext)
             if version:
-                msg = "Joomla Version: "+version; report.info(msg)
+                msg = "Joomla Version: "+version[0]; report.info(msg)
                 for ver in self.versions:
                     ExploitDBSearch(self.url, 'Joomla', ver).Core()
                     if ver == version:
@@ -1443,7 +1443,7 @@ class PostExploit:
                 # For each template ID   
                 htmltext = opener.open(self.url+"/administrator/index.php?option=com_templates&task=source.edit&id="+base64.b64encode(tempPage+":index.php")).read()
                 template = re.findall(re.compile('template "(.+?)"\.</legend>'),htmltext)
-                if verbose : print "[-] Joomla template Found: "+ template[0]
+                if verbose : msg = "Joomla template Found: "+ template[0]; report.verbose(msg)
                 # Gets phpCode and Token
                 self.phpCode = re.findall('<textarea.*>(.+?)</textarea>',htmltext,re.S)
                 self.token = re.findall(re.compile("logout&amp;(.+?)=1\">Logout"),htmltext)
