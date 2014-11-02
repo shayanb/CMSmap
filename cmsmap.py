@@ -342,12 +342,12 @@ class WPScan:
     def WPVersion(self):
         try:
             req = urllib2.Request(self.url+'/readme.html',None,self.headers)
-            htmltext = urllib2.urlopen(req).read()
-            regex = '<br />[ ]*Version[e]* (\d+\.\d+[\.\d+]*)'
+            htmltext = urllib2.urlopen(req).read()         
+            regex = '.*wordpress-logo.png" /></a>\n.*<br />.* (\d+\.\d+[\.\d+]*)\n</h1>'
             pattern =  re.compile(regex)
-            version = re.findall(pattern,htmltext)[0]
+            version = re.findall(pattern,htmltext)           
             if version:
-                msg = "Wordpress Version: "+version; report.info(msg)
+                msg = "Wordpress Version: "+version[0]; report.info(msg)
             else:
                 req = urllib2.Request(self.url,None,self.headers)
                 htmltext = urllib2.urlopen(req).read()
