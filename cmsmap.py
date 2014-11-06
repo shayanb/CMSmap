@@ -1772,7 +1772,7 @@ output = False
 threads = 5
 wordlist = 'wordlist/rockyou.txt'
 
-# Global Methos =================================================================================================
+# Global Methods =================================================================================================
 
 def exit(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
@@ -1817,14 +1817,14 @@ if __name__ == "__main__":
     
     if sys.argv[1:]:
         try:
-            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhU:f:i:F', ["target=", "verbose","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update=","input=","fullscan"])
+            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhU:f:i:F', ["target=", "verbose","version","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update=","input=","fullscan"])
         except getopt.GetoptError as err:
             # print help information and exit:
             print(err) # print something like "option -a not recognized"
             usage(version)
             sys.exit(2)  
         for o, a in optlist:
-            if o == "-h":
+            if o in ("-h", "--help", "--version"):
                 usage(version)
                 sys.exit()
             elif o in ("-t", "--target"):
