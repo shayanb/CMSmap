@@ -353,7 +353,7 @@ class WPScan:
                 htmltext = urllib2.urlopen(req).read()
                 version = re.findall('<meta name="generator" content="WordPress (\d+\.\d+[\.\d+]*)"', htmltext)
                 if version:
-                    msg = "Wordpress Version: "+version; report.info(msg)
+                    msg = "Wordpress Version: "+version[0]; report.info(msg)
                     
             if version in self.versions :
                 for ver in self.versions:
