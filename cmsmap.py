@@ -11,7 +11,7 @@ class Initialize:
     # Save Wordpress, Joomla and Drupal plugins in a local file
     # Set default parameters 
     def __init__(self):
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
+        self.agent = agent
         self.headers={'User-Agent':self.agent,}
         self.ospath = dataPath
         self.forceUpdate = None
@@ -178,12 +178,15 @@ class Initialize:
 class Scanner:
     # Detect type of CMS -> Maybe add it to the main after Initialiazer 
     def __init__(self):
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
+        self.agent = agent
         self.headers={'User-Agent':self.agent,}
         self.url = None
         self.force = None
         self.threads = None
         self.file = None
+        self.CMSFound = False
+        self.notExistingCode = 404
+        self.notValidLen = []
         
     def ForceCMSType(self):
         GenericChecks(self.url).HTTPSCheck()
@@ -205,15 +208,18 @@ class Scanner:
             GenericChecks(self.url).HTTPSCheck()
             GenericChecks(self.url).HeadersCheck()
             GenericChecks(self.url).RobotsTXT()
-            htmltext = urllib2.urlopen(req).read()
+
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php")
             try:
-                urllib2.urlopen(req)
-                WPScan(self.url,self.threads).WPrun()
-            except urllib2.HTTPError, e:
-                if e.code == 403 :
+                htmltext = urllib2.urlopen(req).read()   
+                if len(htmltext) not in self.notValidLen and not self.CMSFound:
                     WPScan(self.url,self.threads).WPrun()
+                    self.CMSFound = True
+            except urllib2.HTTPError, e:
+                if e.code == 403 and len(htmltext) not in self.notValidLen and not self.CMSFound:
+                    WPScan(self.url,self.threads).WPrun()
+                    self.CMSFound = True
                 else:
                     #print e.code
                     msg = "WordPress Config File Not Found: "+self.url+"/wp-config.php"
@@ -222,11 +228,14 @@ class Scanner:
             # Joomla
             req = urllib2.Request(self.url+"/configuration.php")
             try:
-                urllib2.urlopen(req)
-                JooScan(self.url,self.threads).Joorun()
-            except urllib2.HTTPError, e:
-                if e.code == 403 :
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen and not self.CMSFound :
                     JooScan(self.url,self.threads).Joorun()
+                    self.CMSFound = True
+            except urllib2.HTTPError, e:
+                if e.code == 403 and len(e.read()) not in self.notValidLen and not self.CMSFound:
+                    JooScan(self.url,self.threads).Joorun()
+                    self.CMSFound = True
                 else:
                     #print e.code
                     msg = "Joomla Config File Not Found: "+self.url+"/configuration.php"
@@ -235,35 +244,39 @@ class Scanner:
             # Drupal
             req = urllib2.Request(self.url+"/sites/default/settings.php")
             try:
-                urllib2.urlopen(req)
-                DruScan(self.url,"default",self.threads).Drurun()
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen and not self.CMSFound:
+                    DruScan(self.url,"default",self.threads).Drurun()
+                    self.CMSFound = True                                
             except urllib2.HTTPError, e:
                 pUrl = urlparse.urlparse(self.url)
                 netloc = pUrl.netloc.lower()
                 req = urllib2.Request(self.url+"/sites/"+netloc+"/settings.php")
                 try:
                     urllib2.urlopen(req)
-                    DruScan(self.url,netloc,self.threads).Drurun()
-                except urllib2.HTTPError, e:
-                    if e.code == 403 :
+                    if len(e.read()) not in self.notValidLen and not self.CMSFound:
                         DruScan(self.url,netloc,self.threads).Drurun()
+                        self.CMSFound = True
+                except urllib2.HTTPError, e:
+                    if e.code == 403 and len(e.read()) not in self.notValidLen and not self.CMSFound :
+                        DruScan(self.url,netloc,self.threads).Drurun()
+                        self.CMSFound = True
                     else:
                         if verbose:
                             #print e.code
                             msg = "Drupal Config File Not Found: "+self.url+"/sites/default/settings.php"
                             report.verbose(msg)
-                            
-                        msg = "CMS detection failed"; report.error(msg)
-                        msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
-                        sys.exit()
+            
+            if not self.CMSFound :                
+                msg = "CMS detection failed :("; report.error(msg)
+                msg =  "Use -f to force CMSmap to scan (W)ordpress, (J)oomla or (D)rupal"; report.error(msg)
+                sys.exit()
                 
         except urllib2.URLError, e:
             msg = "Website Unreachable: "+self.url
             report.error(msg)
             sys.exit()
             
-
-
     def CheckURL(self):
         pUrl = urlparse.urlparse(self.url)
         #clean up supplied URLs
@@ -281,11 +294,23 @@ class Scanner:
         if self.url.endswith("/") :
             self.url = self.url[:-1]
 
+    def NotExisitingCode(self):
+        self.NotExisitingFile = ["/N0W43H3r3.php","/N0W4yYu04r3Hr.php", "/N0WaY/N0WaY12/N0WaY123.php"]
+        for file in self.NotExisitingFile :
+            req = urllib2.Request(self.url+file,None, self.headers)
+            noRedirOpener = urllib2.build_opener(NoRedirects())        
+            try:
+                htmltext = noRedirOpener.open(req).read()
+                self.notValidLen.append(len(htmltext))
+            except urllib2.HTTPError, e:
+                #print e.code
+                self.notValidLen.append(len(e.read()))
+                self.notExistingCode = e.code
+
 class WPScan:
     # Scan WordPress site
     def __init__(self,url,threads):
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,}
+        self.headers={'User-Agent':agent,}
         self.url = url
         self.currentVer = None
         self.latestVer = None
@@ -330,13 +355,11 @@ class WPScan:
         self.genChecker.AutocompleteOff('/wp-login.php')
         self.WPNotExisitingCode()
         self.WPDefaultFiles()
-        #self.genChecker.CommonFiles()
+        if FullScan : self.genChecker.CommonFiles()
         self.WPplugins()
         ExploitDBSearch(self.url, 'Wordpress', self.pluginsFound).Plugins()
-        self.WPThemes()
         # Search for other vulnerable themes installed
-        ExploitDBSearch(self.url, 'Wordpress', self.themesFound).Themes()
-        self.WPTimThumbs()
+        if FullScan : self.WPThemes(); ExploitDBSearch(self.url, 'Wordpress', self.themesFound).Themes(); self.WPTimThumbs()
         self.WPDirsListing()
               
     def WPVersion(self):
@@ -501,7 +524,7 @@ class WPScan:
                         
     def WPplugins(self):
         msg =  "Searching Wordpress Plugins ..."; report.message(msg)
-        if  not FullScan : self.plugins = self.plugins_small
+        if not FullScan : self.plugins = self.plugins_small
         self.pbar = progressbar.ProgressBar(widgets=self.widgets, maxval=len(self.plugins)).start()
         # Create Code
         q = Queue.Queue(self.queue_num)        
@@ -606,8 +629,7 @@ class MyHandler(urllib2.HTTPHandler):
 class JooScan:
     # Scan Joomla site
     def __init__(self,url,threads):
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,}
+        self.headers={'User-Agent':agent,}
         self.url = url
         self.queue_num = 5
         self.thread_num = threads
@@ -779,8 +801,7 @@ class JooScan:
 class DruScan:
     # Scan Drupal site
     def __init__(self,url,netloc,threads):
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,}
+        self.headers={'User-Agent':agent,}
         self.url = url
         self.queue_num = 5
         self.thread_num = threads
@@ -1017,8 +1038,7 @@ class ExploitDBSearch:
         self.url = url
         self.query = query
         self.cmstype = cmstype
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,}
+        self.headers={'User-Agent':agent,}
         
     def Core(self):
         if self.query is not None:
@@ -1126,8 +1146,7 @@ class ThreadScanner(threading.Thread):
         self.pluginPathEnd = pluginPathEnd
         self.notExistingCode = notExistingCode
         self.notValidLen = notValidLen
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,'Accept-Encoding': None,}
+        self.headers={'User-Agent':agent,'Accept-Encoding': None,}
 
     def run(self):
         while True:
@@ -1146,8 +1165,7 @@ class ThreadScanner(threading.Thread):
 
 class BruteForcer:
         def __init__(self,url,usrlist,pswlist):
-            self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-            self.headers={'User-Agent':self.agent,}
+            self.headers={'User-Agent':agent,}
             if type(usrlist) is str :
                 try:
                     self.usrlist = [line.strip() for line in open(usrlist)]
@@ -1571,8 +1589,7 @@ class PostExploit:
 class GenericChecks:
     def __init__(self,url):
         self.url = url
-        self.agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-        self.headers={'User-Agent':self.agent,}
+        self.headers={'User-Agent':agent,}
         self.widgets = ['                              ', progressbar.Percentage(), ' ', progressbar.Bar(marker=progressbar.RotatingMarker()),' ', progressbar.ETA(), ' ', progressbar.FileTransferSpeed()]
         self.notExistingCode = 404
         self.queue_num = 5
@@ -1761,7 +1778,8 @@ class Report:
     
 
 # Global Variables =============================================================================================
-version=0.4
+version=0.6
+agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
 verbose = False
 CMSmapUpdate = False
 BruteForcingAttack = False
@@ -1797,10 +1815,11 @@ def usage(version):
           -o, --output    save output in a file
           -k, --crack     password hashes file (WordPress and Joomla only)
           -w, --wordlist  wordlist file (Default: rockyou.txt)
+          -a, --agent     set custom user-agent
           -U, --update    (C)MSmap, (W)ordpress plugins and themes, (J)oomla components, (D)rupal modules
-          -h, --help      show this help
           -f, --force     force scan (W)ordpress, (J)oomla or (D)rupal
-          -F, --fullscan  full scan using large plugin lists. Slow! (Default: false)       
+          -F, --fullscan  full scan using large plugin lists. Slow! (Default: false)
+          -h, --help      show this help       
           """
     print "Example: "+ os.path.basename(sys.argv[0]) +" -t https://example.com"
     print "         "+ os.path.basename(sys.argv[0]) +" -t https://example.com -f W -F"
@@ -1817,7 +1836,7 @@ if __name__ == "__main__":
     
     if sys.argv[1:]:
         try:
-            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhU:f:i:F', ["target=", "verbose","version","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update=","input=","fullscan"])
+            optlist, args = getopt.getopt(sys.argv[1:], 't:u:p:T:o:k:w:vhU:f:i:Fa:', ["target=", "verbose","version","help","usr=","psw=","output=","threads=","crack=","wordlist=","force=","update=","input=","fullscan","agent="])
         except getopt.GetoptError as err:
             # print help information and exit:
             print(err) # print something like "option -a not recognized"
@@ -1830,6 +1849,7 @@ if __name__ == "__main__":
             elif o in ("-t", "--target"):
                 scanner.url = a
                 scanner.CheckURL()
+                scanner.NotExisitingCode()
             elif o in ("-u", "--usr"):
                 usrlist = a
                 BruteForcingAttack = True
@@ -1855,6 +1875,8 @@ if __name__ == "__main__":
                 initializer.forceUpdate = a
             elif o in("-F", "--fullscan"):
                 FullScan = True
+            elif o in("-a", "--agent"):
+                agent = scanner.agent = initializer.agent = a
             elif o in("-v", "--verbose"):
                 verbose = True
             else:
@@ -1862,7 +1884,7 @@ if __name__ == "__main__":
                 sys.exit()
     else:
         usage(version)
-        sys.exit()
+        sys.exit() 
     
     start = time.time()
     msg = "Date & Time: "+ time.strftime('%d/%m/%Y %H:%M:%S')

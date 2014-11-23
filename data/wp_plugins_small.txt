@@ -8,9 +8,11 @@ advertizer
 age-verification
 ajax-category-dropdown
 ajaxgallery
+akismet
 all-video-gallery
 allwebmenus-wordpress-menu-plugin
 annonces
+announcement-and-vertical-scroll-news
 asset-manager
 auto-attachments
 bbpress
@@ -20,6 +22,7 @@ catalog
 category-grid-view-gallery
 category-list-portfolio-page
 cevhershare
+cforms
 cimy-counter
 cms-pack
 comment-rating
@@ -84,6 +87,7 @@ leaguemanager
 link-library
 lisl-last-image-slider
 livesig
+login-lockdown
 mac-dock-gallery
 mailz
 media-library-categories
@@ -133,7 +137,10 @@ social-slider-2
 spicy-blogroll
 spider-event-calendar
 st_newsletter
+statpress
+stats
 store-locator-le
+subscribe-to-comments
 thecartpress
 thinkun-remind
 tinymce-thumbnail-gallery
@@ -163,6 +170,7 @@ wp-cal
 wp-content
 wp-cumulus
 wp-custom-pages
+wp-db-backup
 wp-ds-faq
 wp-e-commerce
 wp-filebase
