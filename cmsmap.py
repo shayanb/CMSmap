@@ -211,8 +211,8 @@ class Scanner:
 
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php")
-            try:
-                htmltext = urllib2.urlopen(req).read()   
+            htmltext = urllib2.urlopen(req).read() 
+            try:  
                 if len(htmltext) not in self.notValidLen and not self.CMSFound:
                     WPScan(self.url,self.threads).WPrun()
                     self.CMSFound = True
