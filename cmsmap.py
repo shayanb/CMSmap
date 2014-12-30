@@ -210,9 +210,9 @@ class Scanner:
             GenericChecks(self.url).RobotsTXT()
 
             # WordPress
-            req = urllib2.Request(self.url+"/wp-config.php")
-            htmltext = urllib2.urlopen(req).read() 
-            try:  
+            req = urllib2.Request(self.url+"/wp-config.php") 
+            try:
+                htmltext = urllib2.urlopen(req).read()
                 if len(htmltext) not in self.notValidLen and not self.CMSFound:
                     WPScan(self.url,self.threads).WPrun()
                     self.CMSFound = True
@@ -295,7 +295,7 @@ class Scanner:
             self.url = self.url[:-1]
 
     def NotExisitingCode(self):
-        self.NotExisitingFile = ["/N0W43H3r3.php","/N0W4yYu04r3Hr.php", "/N0WaY/N0WaY12/N0WaY123.php"]
+        self.NotExisitingFile = ["/N0W43H3r3.php","/N0W"+time.strftime('%d%m%H%M%S')+".php", "/N0WaY/N0WaY12/N0WaY123.php"]
         for file in self.NotExisitingFile :
             req = urllib2.Request(self.url+file,None, self.headers)
             noRedirOpener = urllib2.build_opener(NoRedirects())        
@@ -305,7 +305,18 @@ class Scanner:
             except urllib2.HTTPError, e:
                 #print e.code
                 self.notValidLen.append(len(e.read()))
+                self.notExistingCode = e.code      
+        #--> double check added
+        for file in self.NotExisitingFile :
+            req = urllib2.Request(self.url+file,None, self.headers)
+            try:
+                htmltext = urllib2.urlopen(req).read() 
+                self.notValidLen.append(len(htmltext))
+            except urllib2.HTTPError, e:
+                #print e.code
+                self.notValidLen.append(len(e.read()))
                 self.notExistingCode = e.code
+        self.notValidLen = sorted(set(self.notValidLen))
 
 class WPScan:
     # Scan WordPress site
@@ -342,6 +353,7 @@ class WPScan:
             
     def WPrun(self):
         msg = "CMS Detection: Wordpress"; report.info(msg)
+        self.WPNotExisitingCode()
         self.WPVersion()
         self.WPCurrentTheme()
         self.WPConfigFiles()
@@ -353,7 +365,6 @@ class WPScan:
         self.WPXMLRPC_pingback()
         self.WPXMLRPC_BF()
         self.genChecker.AutocompleteOff('/wp-login.php')
-        self.WPNotExisitingCode()
         self.WPDefaultFiles()
         if FullScan : self.genChecker.CommonFiles()
         self.WPplugins()
@@ -406,8 +417,9 @@ class WPScan:
         for file in self.confFiles:
             req = urllib2.Request(self.url+"/wp-config"+file,None,self.headers)
             try:
-                urllib2.urlopen(req)
-                msg = "Configuration File Found: " +self.url+"/wp-config"+file; report.high(msg)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    msg = "Configuration File Found: " +self.url+"/wp-config"+file; report.high(msg)
             except urllib2.HTTPError, e:
                 pass
 
@@ -435,8 +447,9 @@ class WPScan:
         for file in self.defFiles:
             req = urllib2.Request(self.url+file,None,self.headers)
             try:
-                urllib2.urlopen(req)
-                self.defFilesFound.append(self.url+file)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    self.defFilesFound.append(self.url+file)
             except urllib2.HTTPError, e:
                 #print e.code
                 pass
@@ -453,8 +466,8 @@ class WPScan:
             if wpUsers :
                 self.usernames = wpUsers + self.usernames
                 self.usernames = sorted(set(self.usernames))
-            for user in self.usernames:
-                msg = user; report.medium(msg)
+            #for user in self.usernames:
+                #msg = user; report.medium(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
@@ -512,8 +525,8 @@ class WPScan:
             GenericChecks(self.url).DirectoryListing('/wp-content/plugins/'+plugin)
 
     def WPNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
-        noRedirOpener = urllib2.build_opener(NoRedirects())        
+        req = urllib2.Request(self.url+self.pluginPath+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
+        noRedirOpener = urllib2.build_opener(NoRedirects())       
         try:
             htmltext = noRedirOpener.open(req).read()
             self.notValidLen.append(len(htmltext))
@@ -521,6 +534,7 @@ class WPScan:
             #print e.code
             self.notValidLen.append(len(e.read()))
             self.notExistingCode = e.code
+        
                         
     def WPplugins(self):
         msg =  "Searching Wordpress Plugins ..."; report.message(msg)
@@ -649,12 +663,12 @@ class JooScan:
         
     def Joorun(self):
         msg = "CMS Detection: Joomla"; report.info(msg)
+        self.JooNotExisitingCode()
         self.JooVersion()
         self.JooTemplate()
         self.JooConfigFiles()
         self.JooFeed()
         BruteForcer(self.url,self.usernames,self.weakpsw).Joorun()
-        self.JooNotExisitingCode()
         self.JooDefaultFiles()
         # === Takes Long ===
         self.genChecker.CommonFiles()
@@ -698,8 +712,9 @@ class JooScan:
         for file in self.confFiles:
             req = urllib2.Request(self.url+"/configuration"+file)
             try:
-                urllib2.urlopen(req)
-                msg = "Configuration File Found: " +self.url+"/configuration"+file; report.high(msg)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    msg = "Configuration File Found: " +self.url+"/configuration"+file; report.high(msg)
             except urllib2.HTTPError, e:
                 #print e.code
                 pass        
@@ -726,8 +741,9 @@ class JooScan:
         for file in self.defFiles:
             req = urllib2.Request(self.url+file,None,self.headers)
             try:
-                urllib2.urlopen(req)
-                self.defFilesFound.append(self.url+file)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    self.defFilesFound.append(self.url+file)
             except urllib2.HTTPError, e:
                 #print e.code
                 pass
@@ -770,7 +786,7 @@ class JooScan:
             GenericChecks(self.url).DirectoryListing('/components/'+plugin)
             
     def JooNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
+        req = urllib2.Request(self.url+self.pluginPath+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
             htmltext = noRedirOpener.open(req).read()
@@ -823,13 +839,13 @@ class DruScan:
 
     def Drurun(self):
         msg = "CMS Detection: Drupal"; report.info(msg)
+        self.DruNotExisitingCode()
         self.DruVersion()
         self.DruCurrentTheme()
         self.DruConfigFiles()
         self.DruViews()
         self.DruBlog()
         BruteForcer(self.url,self.usernames,self.weakpsw).Drurun()
-        self.DruNotExisitingCode()
         self.DruDefaultFiles()
         # === Takes Long ===
         self.genChecker.CommonFiles()
@@ -877,8 +893,9 @@ class DruScan:
         for file in self.confFiles:
             req = urllib2.Request(self.url+"/sites/"+self.netloc+"/settings"+file)
             try:
-                urllib2.urlopen(req)
-                msg = "Configuration File Found: " +self.url+"/sites/"+self.netloc+"/settings"+file; report.high(msg)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    msg = "Configuration File Found: " +self.url+"/sites/"+self.netloc+"/settings"+file; report.high(msg)
             except urllib2.HTTPError, e:
                 #print e.code
                 pass   
@@ -922,8 +939,9 @@ class DruScan:
         for file in self.defFiles:
             req = urllib2.Request(self.url+file,None,self.headers)
             try:
-                urllib2.urlopen(req)
-                self.defFilesFound.append(self.url+file)
+                htmltext = urllib2.urlopen(req).read()
+                if len(htmltext) not in self.notValidLen:
+                    self.defFilesFound.append(self.url+file)
             except urllib2.HTTPError, e:
                 #print e.code
                 pass
@@ -1005,7 +1023,7 @@ class DruScan:
             GenericChecks(self.url).DirectoryListing('/modules/'+plugin)
             
     def DruNotExisitingCode(self):
-        req = urllib2.Request(self.url+self.pluginPath+"N0WayThatYouAreHere123"+"/",None, self.headers)
+        req = urllib2.Request(self.url+self.pluginPath+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+"/",None, self.headers)
         noRedirOpener = urllib2.build_opener(NoRedirects())        
         try:
             htmltext = noRedirOpener.open(req).read()
@@ -1237,8 +1255,8 @@ class BruteForcer:
                 self.pswlist.pop() # remove user
             #msg = "Valid Usernames found: "; report.message(msg)
             #report.WriteTextFile(msg)
-            for userf in (sorted(set(usersFound))):
-                msg = userf; report.medium(msg)
+            #for userf in (sorted(set(usersFound))):
+                #msg = userf; report.medium(msg)
             for WPCredential in self.WPValidCredentials :
                 PostExploit(self.url).WPShell(WPCredential[0], WPCredential[1])
            
@@ -1597,6 +1615,7 @@ class GenericChecks:
         self.commExt=['.txt', '.php', '/', '.html' ]
         self.notValidLen = []
         self.commFiles = [line.strip() for line in open(os.path.join(dataPath, 'common_files.txt'))]
+        self.NotExisitingLength()
         
     def DirectoryListing(self,relPath):
         self.relPath = relPath
@@ -1656,21 +1675,31 @@ class GenericChecks:
     def RobotsTXT(self):
         req = urllib2.Request(self.url+"/robots.txt",None,self.headers)
         try:
-            urllib2.urlopen(req)
-            msg = "Robots.txt Found: " +self.url+"/robots.txt"
-            report.low(msg)
+            htmltext = urllib2.urlopen(req).read()
+            if len(htmltext) not in self.notValidLen:
+                msg = "Robots.txt Found: " +self.url+"/robots.txt"
+                report.low(msg)
         except urllib2.HTTPError, e:
             #print e.code
             pass
     
     def NotExisitingLength(self):
         for exten in self.commExt:
-            req = urllib2.Request(self.url+"/N0WayThatYouAreHere123"+exten,None, self.headers)
+            req = urllib2.Request(self.url+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+exten,None, self.headers)
             noRedirOpener = urllib2.build_opener(NoRedirects())
             try:
                 htmltext = noRedirOpener.open(req).read()
                 self.notValidLen.append(len(htmltext))
             except urllib2.HTTPError, e:
+                self.notValidLen.append(len(e.read()))
+                self.notExistingCode = e.code
+        for exten in self.commExt:
+            req = urllib2.Request(self.url+"/N0WayThatYouAreHere"+time.strftime('%d%m%H%M%S')+exten,None, self.headers)
+            try:
+                htmltext = urllib2.urlopen(req).read() 
+                self.notValidLen.append(len(htmltext))
+            except urllib2.HTTPError, e:
+                #print e.code
                 self.notValidLen.append(len(e.read()))
                 self.notExistingCode = e.code
         self.notValidLen = sorted(set(self.notValidLen))
