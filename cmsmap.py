@@ -703,7 +703,7 @@ class JooScan:
                 ExploitDBSearch(self.url, "Joomla", [WebTemplate[0]]).Themes()
             if AdminTemplate : 
                 msg = "Joomla Administrator Template: "+AdminTemplate[0]; report.info(msg)
-                ExploitDBSearch(self.url, "Joomla", [WebTemplate[0]]).Themes()
+                ExploitDBSearch(self.url, "Joomla", AdminTemplate[0]).Themes()
         except urllib2.HTTPError, e:
             #print e.code
             pass
