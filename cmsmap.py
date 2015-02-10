@@ -1511,7 +1511,7 @@ class PostExploit:
                             # shell found then exit
                             sys.exit()
                 else:
-                    msg = "Not Writable Joomla template: "+ template[0]; report.verbose()
+                    msg = "Not Writable Joomla template: "+ template[0]; report.verbose(msg)
                 
         except urllib2.HTTPError, e:
             # print e.code
