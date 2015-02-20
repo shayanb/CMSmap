@@ -296,6 +296,7 @@ class Scanner:
 
     def NotExisitingCode(self):
         self.NotExisitingFile = ["/N0W43H3r3.php","/N0W"+time.strftime('%d%m%H%M%S')+".php", "/N0WaY/N0WaY12/N0WaY123.php"]
+        # check without URL redirection
         for file in self.NotExisitingFile :
             req = urllib2.Request(self.url+file,None, self.headers)
             noRedirOpener = urllib2.build_opener(NoRedirects())        
@@ -303,19 +304,27 @@ class Scanner:
                 htmltext = noRedirOpener.open(req).read()
                 self.notValidLen.append(len(htmltext))
             except urllib2.HTTPError, e:
-                #print e.code
+                print e.code
                 self.notValidLen.append(len(e.read()))
-                self.notExistingCode = e.code      
-        #--> double check added
+                self.notExistingCode = e.code
+            except urllib2.URLError, e:
+                msg = "Website Unreachable: "+self.url
+                report.error(msg)
+                sys.exit()      
+        # check with URL redirection
         for file in self.NotExisitingFile :
             req = urllib2.Request(self.url+file,None, self.headers)
             try:
                 htmltext = urllib2.urlopen(req).read() 
                 self.notValidLen.append(len(htmltext))
             except urllib2.HTTPError, e:
-                #print e.code
+                print e.code
                 self.notValidLen.append(len(e.read()))
                 self.notExistingCode = e.code
+            except urllib2.URLError, e:
+                msg = "Website Unreachable: "+self.url
+                report.error(msg)
+                sys.exit()
         self.notValidLen = sorted(set(self.notValidLen))
 
 class WPScan:
@@ -1177,7 +1186,7 @@ class ThreadScanner(threading.Thread):
             except urllib2.HTTPError, e:
                 if e.code != self.notExistingCode and len(e.read()) not in self.notValidLen : self.pluginsFound.append(plugin)
             except urllib2.URLError, e:
-                msg = "[!] Thread Error: If this error persists, reduce number of threads"; print msg
+                msg = "Thread Error: If this error persists, reduce number of threads"; print report.info(msg)
             self.q.task_done()
             
 
