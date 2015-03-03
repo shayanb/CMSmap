@@ -304,7 +304,7 @@ class Scanner:
                 htmltext = noRedirOpener.open(req).read()
                 self.notValidLen.append(len(htmltext))
             except urllib2.HTTPError, e:
-                print e.code
+                #print e.code
                 self.notValidLen.append(len(e.read()))
                 self.notExistingCode = e.code
             except urllib2.URLError, e:
@@ -318,7 +318,7 @@ class Scanner:
                 htmltext = urllib2.urlopen(req).read() 
                 self.notValidLen.append(len(htmltext))
             except urllib2.HTTPError, e:
-                print e.code
+                #print e.code
                 self.notValidLen.append(len(e.read()))
                 self.notExistingCode = e.code
             except urllib2.URLError, e:
