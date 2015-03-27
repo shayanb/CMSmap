@@ -208,7 +208,7 @@ class Scanner:
             GenericChecks(self.url).HTTPSCheck()
             GenericChecks(self.url).HeadersCheck()
             GenericChecks(self.url).RobotsTXT()
-
+            htmltext = ''
             # WordPress
             req = urllib2.Request(self.url+"/wp-config.php") 
             try:
